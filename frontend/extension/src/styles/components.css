@@ -1,0 +1,134 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  /* Glass effect utilities */
+  .glass-effect {
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+  }
+  .glass-border {
+    border: 1px solid var(--glass-border);
+  }
+  /* Scrollbar styling for glass components */
+  .glass-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  .glass-scrollbar::-webkit-scrollbar-track {
+    @apply glass-light rounded-full;
+  }
+  .glass-scrollbar::-webkit-scrollbar-thumb {
+    @apply glass-medium rounded-full;
+  }
+  .glass-scrollbar::-webkit-scrollbar-thumb:hover {
+    @apply glass-heavy;
+  }
+  /* Focus ring for glass components */
+  .glass-focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2;
+  }
+  /* Animation classes */
+  .animate-glass-in {
+    animation: glassIn 0.3s ease-out;
+  }
+  @keyframes glassIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95) translateY(10px);
+      backdrop-filter: blur(0px);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+      backdrop-filter: blur(12px);
+    }
+  }
+  /* Additional animation utilities */
+  .all-\[unset\] {
+    all: unset;
+  }
+  .animate-fade-in {
+    animation: fade-in 1s var(--animation-delay, 0s) ease forwards;
+  }
+  .animate-fade-up {
+    animation: fade-up 1s var(--animation-delay, 0s) ease forwards;
+  }
+  .animate-marquee {
+    animation: marquee var(--duration) infinite linear;
+  }
+  .animate-marquee-vertical {
+    animation: marquee-vertical var(--duration) linear infinite;
+  }
+  .animate-shimmer {
+    animation: shimmer 8s infinite;
+  }
+  .animate-spin {
+    animation: var(--animate-spin);
+  }
+  @keyframes spin {
+    to {
+      transform: rotate(1turn);
+    }
+  }
+  @keyframes image-glow {
+    0% {
+      opacity: 0;
+      animation-timing-function: cubic-bezier(0.74, 0.25, 0.76, 1);
+    }
+    10% {
+      opacity: 0.7;
+      animation-timing-function: cubic-bezier(0.12, 0.01, 0.08, 0.99);
+    }
+    to {
+      opacity: 0.4;
+    }
+  }
+  @keyframes fade-in {
+    0% {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes fade-up {
+    0% {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes shimmer {
+    0%,
+    90%,
+    to {
+      background-position: calc(-100% - var(--shimmer-width)) 0;
+    }
+    30%,
+    60% {
+      background-position: calc(100% + var(--shimmer-width)) 0;
+    }
+  }
+  @keyframes marquee {
+    0% {
+      transform: translate(0);
+    }
+    to {
+      transform: translateX(calc(-100% - var(--gap)));
+    }
+  }
+  @keyframes marquee-vertical {
+    0% {
+      transform: translateY(0);
+    }
+    to {
+      transform: translateY(calc(-100% - var(--gap)));
+    }
+  }
+}

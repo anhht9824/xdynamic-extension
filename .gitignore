@@ -1,0 +1,121 @@
+# --- General ---
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+*.swp
+*.swo
+*~
+*.log
+*.tmp
+*.bak
+
+# --- IDEs ---
+.vscode/*
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/settings.json
+!.vscode/tasks.json
+.idea/
+*.iml
+*.sublime-workspace
+*.sublime-project
+
+# --- Node.js / Frontend (admin-dashboard, extension) ---
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+.npm/
+.pnpm-store/
+
+# Build outputs
+dist/
+build/
+out/
+.output/
+.next/
+.nuxt/
+.cache/
+.parcel-cache/
+
+# Testing / Coverage
+coverage/
+.nyc_output/
+reports/
+junit.xml
+
+# --- Python / Backend ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environments
+.venv/
+venv/
+ENV/
+env/
+.env_bak/
+
+# Unit Test / Coverage
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+profile_default/
+ipython_config.py
+
+# --- Environment Variables ---
+.env
+.env.local
+.env.*.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+
+# --- Docker ---
+.docker/
+
+# --- Project Specific ---
+# Large model files
+*.pth
+*.pt
+*.onnx
+!backend/mobilenetv2_dangerous_objects.pth
+
+# OS generated files
+.Spotlight-V100
+.Trashes

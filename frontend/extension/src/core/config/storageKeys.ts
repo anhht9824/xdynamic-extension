@@ -1,0 +1,16 @@
+export const STORAGE_KEYS = {
+  AUTH_TOKEN: "authToken",
+  USER: "user",
+  USER_EMAIL: "userEmail",
+  USER_ID: "userId",
+  IS_AUTHENTICATED: "isAuthenticated",
+  EXTENSION_STATE: "extensionState",
+  EXTENSION_ENABLED: "extensionEnabled",
+  FILTERS: "filters",
+  CONTENT_TYPES: "contentTypes",
+  TOTAL_BLOCKED: "totalBlocked",
+  TODAY_BLOCKED: "todayBlocked",
+  WEEKLY_BLOCKED: "weeklyBlocked",
+  GUEST_MODE: "guestMode",
+  HAS_COMPLETED_ONBOARDING: "hasCompletedOnboarding",
+} as const;

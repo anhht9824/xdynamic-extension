@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+dist/
+build/
+.pnpm-store/
+
+# Build outputs
+*.log
+*.tsbuildinfo
+
+# IDE
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+coverage/
+
+# Temporary files
+*.tmp
+*.bak
