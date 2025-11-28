@@ -1,8 +1,8 @@
 import React from "react";
 import { useExtensionContext } from "../../providers/ExtensionProvider";
 import { useLanguageContext } from "../../providers/LanguageProvider";
-import { useAuth } from "../../hooks/useAuth";
 import { useToast } from "../../providers/ToastProvider";
+import { PlanType } from "../../types/common";
 import FilterButton from "./FilterButton";
 import { Tooltip } from "../../components/ui";
 
@@ -16,31 +16,32 @@ interface FilterState {
 interface FilterGridProps {
   filters: FilterState;
   onFilterChange?: (filterName: keyof FilterState) => void;
-  isGuestMode?: boolean;
+  planAccess?: PlanType;
+  onRequireAuth?: () => void;
 }
 
-const FilterGrid: React.FC<FilterGridProps> = ({ 
-  filters, 
+const FilterGrid: React.FC<FilterGridProps> = ({
+  filters,
   onFilterChange,
-  isGuestMode = false 
+  planAccess = "free",
+  onRequireAuth,
 }) => {
   const { isEnabled } = useExtensionContext();
   const { t } = useLanguageContext();
-  const { isSignedIn } = useAuth();
   const { showToast } = useToast();
+  const isFreePlan = planAccess === "free";
 
   const handleFilterClick = (key: keyof FilterState, disabled: boolean) => {
-    // If guest mode tries to click premium feature
-    if (disabled && (isGuestMode || !isSignedIn)) {
+    if (disabled) {
       showToast(
         "warning",
-        "Tính năng này chỉ dành cho người dùng đã đăng nhập. Vui lòng đăng nhập để sử dụng.",
+        "Bộ lọc nâng cao chỉ khả dụng khi bạn đăng nhập và nâng cấp gói.",
         4000
       );
+      onRequireAuth?.();
       return;
     }
-    
-    // Normal toggle
+
     onFilterChange?.(key);
   };
 
@@ -49,35 +50,31 @@ const FilterGrid: React.FC<FilterGridProps> = ({
       key: "sensitive" as const,
       label: t("filter.sensitive", "Nhạy cảm"),
       enabled: filters.sensitive && isEnabled,
-      position: "top-0 left-0",
-      disabled: false, // Sensitive luôn available, kể cả guest mode
+      disabled: false,
     },
     {
       key: "violence" as const,
       label: t("filter.violence", "Bạo lực"),
       enabled: filters.violence && isEnabled,
-      position: "top-0 left-[142px]",
-      disabled: !isSignedIn || isGuestMode, // Premium feature
+      disabled: isFreePlan,
     },
     {
       key: "toxicity" as const,
       label: t("filter.toxicity", "Tiêu cực"),
       enabled: filters.toxicity && isEnabled,
-      position: "top-[55px] left-0",
-      disabled: !isSignedIn || isGuestMode, // Premium feature
+      disabled: isFreePlan,
     },
     {
       key: "vice" as const,
       label: t("filter.vice", "Chất kích thích"),
       enabled: filters.vice && isEnabled,
-      position: "top-[55px] left-[142px]",
-      disabled: !isSignedIn || isGuestMode, // Premium feature
+      disabled: isFreePlan,
     },
   ];
 
   return (
-    <div className="relative w-[272px] h-[103px]">
-      {filterOptions.map(({ key, label, enabled, position, disabled }) => {
+    <div className="grid grid-cols-2 gap-2 w-full">
+      {filterOptions.map(({ key, label, enabled, disabled }) => {
         const button = (
           <FilterButton
             label={label}
@@ -85,26 +82,20 @@ const FilterGrid: React.FC<FilterGridProps> = ({
             isEnabled={isEnabled}
             disabled={disabled}
             onClick={() => handleFilterClick(key, disabled)}
-            multiLine={false} // All buttons should have same layout
+            multiLine={false}
           />
         );
 
-        return (
-          <div
+        return disabled ? (
+          <Tooltip
             key={key}
-            className={`absolute w-[130px] h-12 ${position}`}
+            content="Nâng cấp hoặc đăng nhập để bật bộ lọc này"
+            position="top"
           >
-            {disabled ? (
-              <Tooltip 
-                content="Tính năng này chỉ dành cho người dùng đã đăng nhập"
-                position="top"
-              >
-                {button}
-              </Tooltip>
-            ) : (
-              button
-            )}
-          </div>
+            {button}
+          </Tooltip>
+        ) : (
+          <div key={key}>{button}</div>
         );
       })}
     </div>

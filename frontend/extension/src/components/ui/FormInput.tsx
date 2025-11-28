@@ -21,7 +21,7 @@ const FormInput: React.FC<FormInputProps> = ({
         </label>
       )}
       <input
-        className={`w-full p-3 border rounded-lg bg-gray-50 placeholder-gray-400 transition-colors ${
+        className={`w-full p-3 border rounded-2xl bg-gray-50 placeholder-gray-400 transition-colors ${
           error
             ? "border-red-500 focus:border-red-500"
             : "border-gray-200 focus:border-blue-500"

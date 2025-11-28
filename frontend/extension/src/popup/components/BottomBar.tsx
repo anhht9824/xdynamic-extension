@@ -1,5 +1,6 @@
 import React, { useState, useRef } from "react";
-import { Info, ChevronDown } from "lucide-react";
+import { ChevronDown } from "lucide-react";
+import { InfoIcon } from "../../components/icons/InfoIcon";
 import { useLanguageContext } from "../../providers/LanguageProvider";
 import { useClickOutside } from "../../hooks";
 
@@ -10,18 +11,16 @@ interface BottomBarProps {
   onInfoClick?: () => void;
 }
 
-const BottomBar: React.FC<BottomBarProps> = ({ 
-  username, 
-  onSignOut,
+const BottomBar: React.FC<BottomBarProps> = ({
+  username,
   isGuestMode = false,
-  onInfoClick
+  onInfoClick,
 }) => {
-  const { t, language, changeLanguage, availableLanguages } =
-    useLanguageContext();
+  const { t, language, changeLanguage, availableLanguages } = useLanguageContext();
   const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
+  const [isInfoHovered, setIsInfoHovered] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Close dropdown when clicking outside
   useClickOutside(dropdownRef, () => {
     if (showLanguageDropdown) {
       setShowLanguageDropdown(false);
@@ -31,12 +30,11 @@ const BottomBar: React.FC<BottomBarProps> = ({
   const handleInfoClick = () => {
     if (onInfoClick) {
       onInfoClick();
-    } else {
-      // Default behavior: Open onboarding
-      chrome.tabs.create({
-        url: chrome.runtime.getURL("src/onboarding/index.html")
-      });
+      return;
     }
+    chrome.tabs.create({
+      url: chrome.runtime.getURL("src/onboarding/index.html"),
+    });
   };
 
   const handleLanguageChange = (langCode: string) => {
@@ -44,89 +42,58 @@ const BottomBar: React.FC<BottomBarProps> = ({
     setShowLanguageDropdown(false);
   };
 
-  // Handle keyboard navigation in dropdown
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Escape") {
-      setShowLanguageDropdown(false);
-    } else if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      setShowLanguageDropdown(!showLanguageDropdown);
-    }
-  };
-
   return (
-    <>
-      {/* Info Icon - Always Clickable */}
+    <div className="flex items-center justify-between w-full">
       <button
-        className="absolute w-5 h-5 top-1 left-2.5 z-10"
+        className="border-none bg-transparent p-0 cursor-pointer"
         onClick={handleInfoClick}
+        onMouseEnter={() => setIsInfoHovered(true)}
+        onMouseLeave={() => setIsInfoHovered(false)}
         title={t("info.help", "Trợ giúp")}
         aria-label={t("info.help", "Trợ giúp")}
       >
-        <Info className="w-5 h-5 text-blue-500 hover:text-blue-600 transition-colors cursor-pointer" />
+        <InfoIcon variant={isInfoHovered ? "active" : "default"} />
       </button>
 
-      {/* Language Dropdown - Centered */}
-      <div 
+      <div
         ref={dropdownRef}
-        className="flex w-[60px] h-7 items-center justify-center gap-2.5 px-0 py-[3px] absolute top-0 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-sm rounded-[10px] border-2 border-solid border-gray-300 shadow-md z-10"
+        className="relative"
       >
         <button
           onClick={() => setShowLanguageDropdown(!showLanguageDropdown)}
-          onKeyDown={handleKeyDown}
-          className="relative w-full h-[26px] mt-[-2.00px] mb-[-2.00px] focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 rounded-lg"
+          className="h-8 px-4 bg-white rounded-[10px] shadow-sm border border-gray-100 flex items-center justify-center gap-2 hover:bg-gray-50 transition-colors"
           aria-label={t("settings.language", "Ngôn ngữ")}
           aria-expanded={showLanguageDropdown}
           aria-haspopup="true"
         >
-          <div className="flex w-full h-[26px] items-center justify-center px-[5px] py-0 relative">
-            <span className="font-['Sora',Helvetica] font-semibold text-gray-700 text-[11px] text-center tracking-[0.10px] leading-5 whitespace-nowrap">
-              {language === "vi" ? "VI" : "EN"}
-            </span>
-            <ChevronDown className="w-3 h-3 ml-0.5 text-gray-600" />
-          </div>
+          <span className="text-sm font-medium text-blue-600">
+            {language === 'vi' ? 'Tiếng Việt' : 'English'}
+          </span>
+          <ChevronDown className="w-3 h-3 text-gray-400" />
         </button>
 
-        {/* Language Dropdown Menu - Fixed Positioning */}
         {showLanguageDropdown && (
-          <div 
-            className="fixed bg-white rounded-lg shadow-2xl py-1 min-w-[140px] border border-gray-200"
-            style={{
-              bottom: '40px',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              zIndex: 9999
-            }}
-          >
+          <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-white rounded-lg shadow-2xl py-1 min-w-[160px] border border-gray-200 z-50">
             {availableLanguages.map((lang) => (
               <button
                 key={lang.code}
                 onClick={() => handleLanguageChange(lang.code)}
-                className={`w-full text-left px-4 py-2.5 text-sm hover:bg-blue-50 transition-colors flex items-center justify-between ${
-                  language === lang.code 
-                    ? "bg-blue-50 text-blue-600 font-semibold" 
+                className={`w-full text-left px-4 py-2 text-sm hover:bg-blue-50 transition-colors flex items-center justify-between ${
+                  language === lang.code
+                    ? "bg-blue-50 text-blue-600 font-semibold"
                     : "text-gray-700 font-medium"
                 }`}
               >
                 <span>{lang.name}</span>
-                {language === lang.code && (
-                  <span className="text-blue-600 text-lg">✓</span>
-                )}
+                {language === lang.code && <span className="text-blue-600 text-lg">✓</span>}
               </button>
             ))}
           </div>
         )}
       </div>
 
-      {/* Username Display - Only show if NOT guest mode */}
-      {!isGuestMode && (
-        <div className="absolute right-2.5 top-1 flex items-center gap-1">
-          <span className="font-['Sora',Helvetica] font-medium text-gray-700 text-[10px] tracking-[0.10px] leading-5 whitespace-nowrap max-w-[80px] overflow-hidden text-ellipsis">
-            {username}
-          </span>
-        </div>
-      )}
-    </>
+
+    </div>
   );
 };
 

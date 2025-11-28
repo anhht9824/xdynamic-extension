@@ -215,7 +215,7 @@ const RegisterModal: React.FC<RegisterModalProps> = ({
       <Button
         onClick={handleRegister}
         disabled={isLoading}
-        className="w-full mt-6 bg-green-500 hover:bg-green-600"
+        className="w-full mt-6 bg-[#0D5EA6] hover:bg-[#0B4D8C]"
       >
         {isLoading ? (
           <div className="flex items-center justify-center space-x-2">
@@ -231,7 +231,7 @@ const RegisterModal: React.FC<RegisterModalProps> = ({
         {t("auth.haveAccount", "Đã có tài khoản?")}{" "}
         <button
           onClick={onSwitchToLogin}
-          className="text-blue-600 hover:underline font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
+          className="text-[#0D5EA6] hover:underline font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
         >
           {t("auth.login", "Đăng nhập")}
         </button>

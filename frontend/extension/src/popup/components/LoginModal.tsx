@@ -222,7 +222,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
         <button
           type="button"
           onClick={() => setShowForgotPassword(true)}
-          className="text-sm text-blue-600 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
+          className="text-sm text-[#0D5EA6] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
         >
           {t("auth.forgotPassword", "Quên mật khẩu?")}
         </button>
@@ -231,7 +231,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
       <Button
         onClick={handleLogin}
         disabled={isLoading}
-        className="w-full mt-6 bg-blue-500 hover:bg-blue-600"
+        className="w-full mt-6 bg-[#0D5EA6] hover:bg-[#0B4D8C]"
       >
         {isLoading ? (
           <div className="flex items-center justify-center space-x-2">
@@ -247,7 +247,7 @@ const LoginModal: React.FC<LoginModalProps> = ({
         {t("auth.noAccount", "Chưa có tài khoản?")}{" "}
         <button
           onClick={onSwitchToRegister}
-          className="text-blue-600 hover:underline font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
+          className="text-[#0D5EA6] hover:underline font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
         >
           {t("auth.register", "Đăng ký ngay")}
         </button>

@@ -8,13 +8,13 @@ interface StatsDisplayProps {
 
 const StatsDisplay: React.FC<StatsDisplayProps> = ({ blockedCount }) => {
   const { t } = useLanguageContext();
-  
-  // Fixed text: "Đang chặn" + "phương trình độc hại" (corrected from "phụng trình")
-  const statsText = t("stats.blocking", `Đang chặn ${formatNumber(blockedCount)} phương trình độc hại`)
-    .replace("{count}", formatNumber(blockedCount));
+  const statsText = t(
+    "stats.blocking",
+    `Đã chặn được ${formatNumber(blockedCount)} phương tiện độc hại`
+  ).replace("{count}", formatNumber(blockedCount));
 
   return (
-    <div className="w-[313px] font-['Sora',Helvetica] font-semibold text-orange-600 text-sm text-center tracking-[-0.01em] leading-tight">
+    <div className="w-full font-['Sora',Helvetica] font-semibold text-orange-600 text-sm text-center tracking-[-0.01em] leading-tight">
       {statsText}
     </div>
   );

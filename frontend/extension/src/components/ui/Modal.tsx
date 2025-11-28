@@ -134,7 +134,7 @@ const Modal: React.FC<ModalProps> = ({
     >
       <div
         ref={modalRef}
-        className={`bg-white rounded-xl shadow-xl w-full ${sizeClasses[size]} max-h-[90vh] overflow-y-auto animate-slide-up ${className}`}
+        className={`bg-white rounded-3xl shadow-xl w-full ${sizeClasses[size]} max-h-[90vh] overflow-y-auto animate-slide-up ${className}`}
       >
         {/* Header */}
         {(title || showCloseButton) && (
