@@ -23,7 +23,6 @@ export default defineConfig({
         onboarding: resolve(__dirname, "src/onboarding/index.html"),
         report: resolve(__dirname, "src/report/index.html"),
         login: resolve(__dirname, "src/login/index.html"),
-        dashboard: resolve(__dirname, "src/dashboard/index.html"),
         payment: resolve(__dirname, "src/payment/index.html"),
         plan: resolve(__dirname, "src/plan/index.html"),
       },

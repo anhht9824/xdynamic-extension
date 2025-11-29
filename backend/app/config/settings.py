@@ -1,5 +1,8 @@
+from pathlib import Path
 from pydantic_settings import BaseSettings
 from functools import lru_cache
+
+BACKEND_ROOT = Path(__file__).resolve().parents[2]
 
 
 class Settings(BaseSettings):
@@ -10,7 +13,7 @@ class Settings(BaseSettings):
     APP_URL: str = "http://localhost:8000/fe"  # Frontend base URL to receive OAuth codes
     
     # Database
-    DATABASE_URL: str = "sqlite:///./app.db"
+    DATABASE_URL: str = "sqlite:///data/app.db"
     
     # JWT
     JWT_SECRET_KEY: str = "your-secret-key-change-in-production"
@@ -45,7 +48,8 @@ class Settings(BaseSettings):
     PLAN_PRO_PRICE: int = 299000  # VND
     
     class Config:
-        env_file = ".env"
+        env_file = BACKEND_ROOT / ".env"
+        env_file_encoding = "utf-8"
         case_sensitive = True
         extra = 'ignore'  # Ignore extra fields from .env
 
@@ -53,6 +57,5 @@ class Settings(BaseSettings):
 @lru_cache()
 def get_settings() -> Settings:
     return Settings()
-
 
 

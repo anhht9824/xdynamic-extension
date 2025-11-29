@@ -4,11 +4,13 @@ import torchvision.transforms as transforms
 from torchvision import models
 from PIL import Image
 from typing import List, Dict
+from pathlib import Path
 import io
 
 from app.config import get_settings
 
 settings = get_settings()
+BACKEND_ROOT = Path(__file__).resolve().parents[2]
 
 
 class MultilabelMobileNetV2(nn.Module):
@@ -51,7 +53,10 @@ class MLInferenceService:
             self.model = MultilabelMobileNetV2(num_classes=len(self.class_names), pretrained=False)
             
             # Load state dict
-            state_dict = torch.load(settings.MODEL_PATH, map_location=self.device)
+            model_path = Path(settings.MODEL_PATH)
+            if not model_path.is_absolute():
+                model_path = BACKEND_ROOT / model_path
+            state_dict = torch.load(model_path, map_location=self.device)
             self.model.load_state_dict(state_dict)
             
             self.model.to(self.device)
@@ -95,4 +100,3 @@ class MLInferenceService:
             "probabilities": probabilities,
             "active": active_classes
         }
-
