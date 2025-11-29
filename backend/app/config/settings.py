@@ -34,7 +34,7 @@ class Settings(BaseSettings):
     MODEL_PATH: str = "mobilenetv2_dangerous_objects.pth"
     MODEL_IMG_SIZE: int = 224
 
-    MODEL_CLASSES: list = ["0", "1", "2", "3"]
+    MODEL_CLASSES: list = ["Máu me", "Vũ khí", "Chiến tranh", "Nhạy cảm"]
     
     # Subscription Plans
     PLAN_FREE_MONTHLY_QUOTA: int = 100

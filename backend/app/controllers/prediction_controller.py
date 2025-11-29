@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 import time
+import logging
 
 from app.database import get_db
 from app.services.subscription_service import SubscriptionService
@@ -13,6 +14,9 @@ router = APIRouter(prefix="/api/v1", tags=["Prediction"])
 
 # Initialize ML service (singleton)
 ml_service = MLInferenceService()
+
+# Setup logging
+logger = logging.getLogger(__name__)
 
 
 @router.post("/predict", response_model=PredictionResponse)
@@ -38,7 +42,13 @@ async def predict(
     # Read image
     try:
         image_bytes = await file.read()
-    except Exception:
+        if not image_bytes or len(image_bytes) < 100:
+            logger.warning(f"Empty or too small image received: {len(image_bytes) if image_bytes else 0} bytes")
+            raise HTTPException(status_code=400, detail="Empty or invalid image file")
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to read image: {e}")
         raise HTTPException(status_code=400, detail="Failed to read image")
     
     # Perform inference
@@ -46,8 +56,10 @@ async def predict(
     try:
         result = ml_service.predict(image_bytes, threshold)
     except ValueError as e:
+        logger.warning(f"Invalid image format: {e}, size: {len(image_bytes)} bytes")
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
+        logger.error(f"Inference failed: {e}")
         raise HTTPException(status_code=500, detail=f"Inference failed: {str(e)}")
     
     response_time = (time.time() - start_time) * 1000  # ms

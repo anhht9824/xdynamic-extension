@@ -56,6 +56,21 @@ const handlers: Partial<Record<RuntimeMessage["type"], MessageHandler>> = {
       );
     return true;
   },
+  ANALYZE_IMAGE_DATA: (message, sendResponse) => {
+    if (message.type !== "ANALYZE_IMAGE_DATA") return false;
+    detectionService
+      .analyzeImageWithData(message.imageData, message.url, message.context)
+      .then((result) =>
+        sendResponse(result as unknown as RuntimeResponse)
+      )
+      .catch((error: Error) =>
+        sendResponse({
+          success: false,
+          error: error.message,
+        })
+      );
+    return true;
+  },
 };
 
 export const routeRuntimeMessage = (

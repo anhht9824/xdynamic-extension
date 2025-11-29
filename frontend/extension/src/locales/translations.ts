@@ -92,9 +92,9 @@ export const translations: Translations = {
 
   // Content filtering
   "filter.sensitive": { en: "Sensitive", vi: "Nhạy cảm" },
-  "filter.violence": { en: "Violence", vi: "Bạo lực" },
-  "filter.toxicity": { en: "Toxicity", vi: "Tiêu cực" },
-  "filter.vice": { en: "Vice", vi: "Chất kích thích" },
+  "filter.violence": { en: "Blood/Gore", vi: "Máu me" },
+  "filter.toxicity": { en: "Weapons", vi: "Vũ khí" },
+  "filter.vice": { en: "War", vi: "Chiến tranh" },
   "filter.enabled": { en: "Enabled", vi: "Bật" },
   "filter.disabled": { en: "Disabled", vi: "Tắt" },
   "filter.blocked": {

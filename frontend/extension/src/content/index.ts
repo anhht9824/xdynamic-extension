@@ -12,6 +12,8 @@ logger.info("Content script loaded - XDynamic Extension");
 
 document.documentElement.setAttribute("data-xdynamic-loaded", "true");
 
+// Note: Early blur CSS is injected by early-blur.ts which runs at document_start
+
 const processedImages = new Set<string>();
 
 const scanConfig: ScanConfig = {
@@ -19,7 +21,7 @@ const scanConfig: ScanConfig = {
   blockThreshold: 0.8,
   warnThreshold: 0.5,
   maxImagesPerScan: Number.POSITIVE_INFINITY,
-  scanDelay: 500,
+  scanDelay: 100, // Reduced delay for faster scanning
 };
 
 const isExtensionContextValid = (): boolean => {
@@ -116,11 +118,211 @@ const markWarned = (img: HTMLImageElement, result: DetectionResult): void => {
   img.style.border = "3px solid orange";
 };
 
-const getImageUrl = (img: HTMLImageElement): string | null => {
-  const imageUrl = img.src || img.dataset.src;
+/**
+ * Add click-to-reveal functionality for images that couldn't be scanned
+ */
+const addClickToReveal = (img: HTMLImageElement, message: string): void => {
+  if (img.dataset.xdynamicClickable) return; // Already added
+  
+  img.dataset.xdynamicClickable = "true";
+  img.title = message;
+  img.style.cursor = "pointer";
+  
+  img.addEventListener(
+    "click",
+    (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      
+      // Mark as safe to remove blur
+      img.dataset.xdynamicSafe = "true";
+      img.title = "Image revealed (not scanned)";
+      img.style.cursor = "";
+    },
+    { once: true }
+  );
+};
+
+/**
+ * Get unique identifier for an image (for tracking processed images)
+ */
+const getImageIdentifier = (img: HTMLImageElement): string | null => {
+  // Use src if available (even base64 truncated)
+  if (img.src) {
+    // For base64, use first 100 chars + length as identifier
+    if (img.src.startsWith('data:')) {
+      return `base64-${img.src.substring(0, 100)}-${img.src.length}`;
+    }
+    return img.src;
+  }
+  
+  // Use data-src as fallback
+  if (img.dataset.src) {
+    return img.dataset.src;
+  }
+  
+  // Use parent data-id for Google Images
+  const parent = img.closest('[data-id]');
+  if (parent) {
+    return `container-${parent.getAttribute('data-id')}`;
+  }
+  
+  return null;
+};
+
+/**
+ * Get fetchable URL for an image (URL that can be fetched by background script)
+ */
+const getFetchableUrl = (img: HTMLImageElement): string | null => {
+  // For Google Images, try to find the original image URL
+  if (isGoogleImages()) {
+    // Method 1: Check parent anchor for href with actual image URL
+    const anchor = img.closest('a[href]') as HTMLAnchorElement | null;
+    if (anchor?.href) {
+      try {
+        const url = new URL(anchor.href);
+        const imgUrl = url.searchParams.get('imgurl');
+        if (imgUrl) {
+          return imgUrl;
+        }
+      } catch {}
+    }
+    
+    // Method 2: Check for data-iurl attribute
+    const dataIurl = img.getAttribute('data-iurl') || img.dataset.iurl;
+    if (dataIurl && !dataIurl.startsWith('data:') && !dataIurl.includes('encrypted-')) {
+      return dataIurl;
+    }
+    
+    // Method 3: Check data-src
+    if (img.dataset.src && !img.dataset.src.startsWith('data:') && !img.dataset.src.includes('encrypted-')) {
+      return img.dataset.src;
+    }
+    
+    // Method 4: If src is a regular URL (not base64 or encrypted)
+    if (img.src && !img.src.startsWith('data:') && !img.src.includes('encrypted-')) {
+      return img.src;
+    }
+    
+    // No fetchable URL available for Google Images thumbnails
+    return null;
+  }
+  
+  // For non-Google sites
+  const imageUrl = img.src || img.dataset.src || img.dataset.lazySrc;
   if (!imageUrl) return null;
-  if (imageUrl.startsWith("data:") || imageUrl.startsWith("blob:")) return null;
+  
+  // Skip blob URLs
+  if (imageUrl.startsWith("blob:")) return null;
+  
+  // Skip base64 (not fetchable)
+  if (imageUrl.startsWith("data:")) return null;
+  
   return imageUrl;
+};
+
+/**
+ * Check if image has base64 data that can be sent directly
+ */
+const getBase64Data = (img: HTMLImageElement): string | null => {
+  // Check if src is base64
+  if (img.src?.startsWith('data:image/')) {
+    return img.src;
+  }
+  
+  // Check data-src
+  if (img.dataset.src?.startsWith('data:image/')) {
+    return img.dataset.src;
+  }
+  
+  return null;
+};
+
+/**
+ * Check if image element should be scanned (is visible and large enough)
+ */
+const shouldScanImage = (img: HTMLImageElement): boolean => {
+  // For Google Images, be more lenient with size requirements
+  const minSize = isGoogleImages() ? 30 : 50;
+  
+  // Check natural dimensions first
+  if (img.naturalWidth >= minSize && img.naturalHeight >= minSize) {
+    return true;
+  }
+  
+  // Check displayed dimensions as fallback
+  if (img.width >= minSize && img.height >= minSize) {
+    return true;
+  }
+  
+  // Check if image hasn't loaded yet
+  if (!img.complete) {
+    return true; // Will be checked again after load
+  }
+  
+  return false;
+};
+
+/**
+ * Extract high-res image URL from Google Images elements
+ */
+const getGoogleImagesUrl = (element: HTMLElement): string | null => {
+  // Try to get the image URL from Google Images specific attributes
+  const img = element.querySelector('img') as HTMLImageElement | null;
+  if (!img) return null;
+  
+  // Check for data-src (lazy loaded)
+  if (img.dataset.src && !img.dataset.src.startsWith('data:')) {
+    return img.dataset.src;
+  }
+  
+  // Check for current src
+  if (img.src && !img.src.startsWith('data:')) {
+    return img.src;
+  }
+  
+  return null;
+};
+
+/**
+ * Check if we're on Google Images
+ */
+const isGoogleImages = (): boolean => {
+  return window.location.hostname.includes('google') && 
+         (window.location.pathname.includes('/search') && window.location.search.includes('tbm=isch'));
+};
+
+/**
+ * Get all scannable images including Google Images specific elements
+ */
+const getAllScannableImages = (): HTMLImageElement[] => {
+  const images: HTMLImageElement[] = [];
+  
+  // Standard img tags
+  const standardImgs = document.querySelectorAll<HTMLImageElement>('img');
+  standardImgs.forEach(img => images.push(img));
+  
+  // For Google Images, look for thumbnail containers
+  if (isGoogleImages()) {
+    // Google Images thumbnail containers
+    const googleThumbnails = document.querySelectorAll('[data-id]');
+    googleThumbnails.forEach(container => {
+      const img = container.querySelector('img') as HTMLImageElement | null;
+      if (img && !images.includes(img)) {
+        images.push(img);
+      }
+    });
+    
+    // Also look for images in divs with specific classes used by Google
+    const googleImgDivs = document.querySelectorAll('div[data-ved] img, a[data-ved] img');
+    googleImgDivs.forEach(img => {
+      if (img instanceof HTMLImageElement && !images.includes(img)) {
+        images.push(img);
+      }
+    });
+  }
+  
+  return images;
 };
 
 const notifyDetection = async (result: DetectionResult): Promise<void> => {
@@ -134,19 +336,89 @@ const notifyDetection = async (result: DetectionResult): Promise<void> => {
 };
 
 const scanImage = async (img: HTMLImageElement): Promise<void> => {
-  const imageUrl = getImageUrl(img);
-  if (!imageUrl || processedImages.has(imageUrl)) return;
-  if (img.naturalWidth < 50 || img.naturalHeight < 50) return;
+  // Skip if already processed with result
+  if (img.dataset.xdynamicBlocked || img.dataset.xdynamicWarned) {
+    return;
+  }
+  
+  // Get unique identifier for tracking processed images
+  const imageId = getImageIdentifier(img);
+  if (!imageId) return;
+  
+  // For Google Images, we may need to re-scan if image wasn't ready before
+  const wasScannedBefore = processedImages.has(imageId);
+  const isGoogleImg = isGoogleImages();
+  
+  // Skip if already processed (unless it's Google Images and image wasn't complete before)
+  if (wasScannedBefore && !isGoogleImg) return;
+  if (wasScannedBefore && img.dataset.xdynamicScanned === 'complete') return;
+  
+  // Wait for image to be ready
+  if (!img.complete || img.naturalWidth === 0) {
+    await new Promise<void>((resolve) => {
+      const onLoad = () => {
+        img.removeEventListener('error', onError);
+        resolve();
+      };
+      const onError = () => {
+        img.removeEventListener('load', onLoad);
+        resolve();
+      };
+      img.addEventListener('load', onLoad, { once: true });
+      img.addEventListener('error', onError, { once: true });
+      // Timeout after 5 seconds
+      setTimeout(() => {
+        img.removeEventListener('load', onLoad);
+        img.removeEventListener('error', onError);
+        resolve();
+      }, 5000);
+    });
+  }
+  
+  // Check if image should be scanned (size requirements)
+  if (!shouldScanImage(img)) {
+    return;
+  }
+  
+  // Double check image is actually ready
+  if (!img.complete || img.naturalWidth === 0) {
+    logger.warn(`Image not ready for scanning: ${imageId.substring(0, 50)}...`);
+    return;
+  }
 
-  processedImages.add(imageUrl);
+  processedImages.add(imageId);
+  img.dataset.xdynamicScanned = "pending";
 
   try {
-    logger.info(`Scanning image: ${imageUrl}`);
+    // Get fetchable URL if available
+    const fetchableUrl = getFetchableUrl(img);
+    // Get base64 data if image src is already base64
+    const base64Data = getBase64Data(img);
+    
+    // Debug logging for Google Images
+    if (isGoogleImages()) {
+      logger.info(`[Google Images Debug] Image src type: ${img.src?.substring(0, 30)}...`);
+      logger.info(`[Google Images Debug] Has base64: ${!!base64Data}, Has fetchable URL: ${!!fetchableUrl}`);
+      if (fetchableUrl) {
+        logger.info(`[Google Images Debug] Fetchable URL: ${fetchableUrl.substring(0, 80)}...`);
+      }
+    }
+    
+    // Log what we're working with
+    const urlForLog = fetchableUrl || base64Data?.substring(0, 50) || imageId;
+    logger.info(`Scanning image: ${urlForLog.substring(0, 100)}...`);
 
-    const result = await detectionService.analyzeImage(imageUrl, {
-      pageUrl: window.location.href,
-      domain: window.location.hostname,
-    });
+    // Pass both URL and image element to detection service
+    // Service will try: 1) canvas, 2) base64 direct send, 3) URL fetch via background
+    const result = await detectionService.analyzeImage(
+      fetchableUrl || imageId, 
+      {
+        pageUrl: window.location.href,
+        domain: window.location.hostname,
+      },
+      img, // Pass the image element for canvas method
+      base64Data || undefined // Pass base64 data if available
+    );
 
     logger.info("Scan result:", result);
 
@@ -154,22 +426,61 @@ const scanImage = async (img: HTMLImageElement): Promise<void> => {
       switch (result.action) {
         case "block":
           markBlocked(img, result);
-          logger.warn(`Blocked image: ${imageUrl}`, result.predictions);
+          logger.warn(`Blocked image: ${urlForLog}`, result.predictions);
           break;
         case "warn":
           markWarned(img, result);
-          logger.warn(`Warned about image: ${imageUrl}`, result.predictions);
+          logger.warn(`Warned about image: ${urlForLog}`, result.predictions);
+          // Mark as safe to remove CSS blur, but keep warning border
+          img.dataset.xdynamicSafe = "true";
+          if (img.dataset.xdynamicPending) {
+            delete img.dataset.xdynamicPending;
+          }
           break;
         case "allow":
-          logger.info(`Allowed image: ${imageUrl}`);
+          logger.info(`Allowed image: ${urlForLog}`);
+          // Mark as safe to remove CSS blur
+          img.dataset.xdynamicSafe = "true";
+          if (img.dataset.xdynamicPending) {
+            delete img.dataset.xdynamicPending;
+          }
           break;
       }
 
       await notifyDetection(result);
+    } else if (result.status === "failed") {
+      // If scan failed (e.g., cross-origin), add click-to-reveal on Google Images
+      if (isGoogleImages()) {
+        logger.warn(`Scan failed, adding click-to-reveal: ${urlForLog.substring(0, 50)}...`);
+        addClickToReveal(img, "Could not scan this image. Click to reveal.");
+      } else {
+        // For non-Google sites, mark as safe on failure (allow by default)
+        img.dataset.xdynamicSafe = "true";
+        if (img.dataset.xdynamicPending) {
+          delete img.dataset.xdynamicPending;
+        }
+      }
     }
+    
+    // Mark as completely scanned
+    img.dataset.xdynamicScanned = "complete";
   } catch (error) {
-    logger.error(`Failed to scan image ${imageUrl}:`, error);
-    processedImages.delete(imageUrl);
+    logger.error(`Failed to scan image ${imageId}:`, error);
+    
+    // On Google Images, add click-to-reveal for failed scans
+    if (isGoogleImages()) {
+      logger.warn(`Error scanning, adding click-to-reveal: ${imageId.substring(0, 50)}...`);
+      addClickToReveal(img, "Could not scan this image. Click to reveal.");
+      img.dataset.xdynamicScanned = "failed";
+    } else {
+      // For other sites, mark as safe and allow retry
+      img.dataset.xdynamicSafe = "true";
+      if (img.dataset.xdynamicPending) {
+        delete img.dataset.xdynamicPending;
+      }
+      processedImages.delete(imageId);
+      img.dataset.xdynamicScanned = "";
+    }
   }
 };
 
@@ -196,10 +507,21 @@ const scanPage = async (): Promise<void> => {
 
   logger.info("Starting page scan...");
 
-  const images = document.querySelectorAll<HTMLImageElement>("img");
+  // Use enhanced image finder that handles Google Images
+  const images = getAllScannableImages();
   let scannedCount = 0;
+  
+  // CSS already handles pre-blur on Google Images, just mark as pending
+  const isGoogleImg = isGoogleImages();
+  if (isGoogleImg) {
+    for (const img of images) {
+      if (!img.dataset.xdynamicBlocked && !img.dataset.xdynamicWarned && !img.dataset.xdynamicScanned && !img.dataset.xdynamicSafe) {
+        img.dataset.xdynamicPending = "true";
+      }
+    }
+  }
 
-  for (const img of Array.from(images)) {
+  for (const img of images) {
     if (
       Number.isFinite(scanConfig.maxImagesPerScan) &&
       scannedCount >= scanConfig.maxImagesPerScan
@@ -224,6 +546,9 @@ const scanPage = async (): Promise<void> => {
 const observeDOMChanges = (): void => {
   if (!document.body) return;
 
+  // Track images that are being scanned to avoid double-scanning
+  const scanningImages = new Set<HTMLImageElement>();
+
   const observer = new MutationObserver(async (mutations) => {
     if (!ensureValidContext()) {
       observer.disconnect();
@@ -235,16 +560,55 @@ const observeDOMChanges = (): void => {
 
     if (!enabled || !authenticated) return;
 
+    const imagesToScan: HTMLImageElement[] = [];
+
     for (const mutation of mutations) {
+      // Handle added nodes
       for (const node of mutation.addedNodes) {
         if (node instanceof HTMLImageElement) {
-          await scanImage(node);
+          if (!scanningImages.has(node)) {
+            imagesToScan.push(node);
+          }
         } else if (node instanceof HTMLElement) {
+          // For Google Images and other sites with lazy loading
           const images = node.querySelectorAll<HTMLImageElement>("img");
           for (const img of images) {
-            await scanImage(img);
+            if (!scanningImages.has(img)) {
+              imagesToScan.push(img);
+            }
           }
         }
+      }
+      
+      // Handle attribute changes (for lazy-loaded images that update src)
+      if (mutation.type === 'attributes' && mutation.target instanceof HTMLImageElement) {
+        const img = mutation.target;
+        if (!scanningImages.has(img)) {
+          const imageId = getImageIdentifier(img);
+          if (imageId && !processedImages.has(imageId)) {
+            imagesToScan.push(img);
+          }
+        }
+      }
+    }
+
+    // CSS already handles pre-blur on Google Images, just mark as pending
+    if (isGoogleImages()) {
+      for (const img of imagesToScan) {
+        if (!img.dataset.xdynamicBlocked && !img.dataset.xdynamicWarned && !img.dataset.xdynamicScanned && !img.dataset.xdynamicSafe) {
+          img.dataset.xdynamicPending = "true";
+        }
+      }
+    }
+
+    // Scan all new images
+    for (const img of imagesToScan) {
+      scanningImages.add(img);
+      try {
+        await scanImage(img);
+      } finally {
+        scanningImages.delete(img);
+        // Note: pre-blur removal is handled inside scanImage based on result
       }
     }
   });
@@ -252,6 +616,8 @@ const observeDOMChanges = (): void => {
   observer.observe(document.body, {
     childList: true,
     subtree: true,
+    attributes: true,
+    attributeFilter: ['src', 'data-src', 'data-lazy-src'],
   });
 
   logger.info("DOM observer initialized");
@@ -290,16 +656,87 @@ const handleRuntimeMessage = (
 
 addRuntimeMessageListener(handleRuntimeMessage);
 
+/**
+ * Debounce function for scroll handling
+ */
+const debounce = <T extends (...args: any[]) => any>(
+  func: T,
+  wait: number
+): ((...args: Parameters<T>) => void) => {
+  let timeout: ReturnType<typeof setTimeout> | null = null;
+  return (...args: Parameters<T>) => {
+    if (timeout) clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  };
+};
+
+/**
+ * Handle scroll events to scan newly visible images
+ */
+const handleScroll = debounce(async () => {
+  if (!ensureValidContext()) return;
+  
+  const enabled = await isExtensionEnabled();
+  const authenticated = await isUserAuthenticated();
+  
+  if (!enabled || !authenticated) return;
+  
+  // Scan visible images that haven't been processed yet
+  const images = getAllScannableImages();
+  for (const img of images) {
+    if (img.dataset.xdynamicBlocked || img.dataset.xdynamicWarned) continue;
+    const imageId = getImageIdentifier(img);
+    if (imageId && !processedImages.has(imageId)) {
+      // Check if image is in viewport
+      const rect = img.getBoundingClientRect();
+      const isVisible = rect.top < window.innerHeight && rect.bottom > 0;
+      if (isVisible) {
+        await scanImage(img);
+      }
+    }
+  }
+}, 300);
+
 const initialize = (): void => {
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", () => {
-      scanPage();
-      observeDOMChanges();
-    });
-  } else {
+  const startScanning = () => {
     scanPage();
     observeDOMChanges();
+    // Add scroll listener for lazy-loaded images
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    
+    // For Google Images: Re-scan after a short delay to catch images that loaded late
+    if (isGoogleImages()) {
+      // First retry after 500ms
+      setTimeout(() => {
+        logger.info('Google Images: Re-scanning after 500ms...');
+        scanPage();
+      }, 500);
+      
+      // Second retry after 1.5s for any remaining images
+      setTimeout(() => {
+        logger.info('Google Images: Re-scanning after 1.5s...');
+        scanPage();
+      }, 1500);
+      
+      // Third retry after 3s for very slow loading
+      setTimeout(() => {
+        logger.info('Google Images: Final re-scan after 3s...');
+        scanPage();
+      }, 3000);
+    }
+  };
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", startScanning);
+  } else {
+    startScanning();
   }
+
+  // Also scan when window fully loads (all images loaded)
+  window.addEventListener('load', () => {
+    logger.info('Window loaded: Re-scanning page...');
+    scanPage();
+  });
 
   logger.info("Content script initialized successfully");
 };
