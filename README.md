@@ -1,3 +1,4 @@
+<!-- markdownlint-disable -->
 # XDynamic Extension
 
 Hệ thống phát hiện nội dung NSFW toàn diện bao gồm:

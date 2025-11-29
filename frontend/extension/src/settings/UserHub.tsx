@@ -18,7 +18,7 @@ import {
 } from "./components/SkeletonLoader";
 import { ConfirmationModal, Toast } from "../components/common";
 import { UserProfile, DashboardMetrics, SecuritySettings, PrivacySettings, UserStatistics } from "../types/common";
-import { DEFAULTS, logger, navigateToPage, navigateToPageInCurrentTab } from "../utils";
+import { DEFAULTS, EXTERNAL_LINKS, logger, navigateToPage, navigateToPageInCurrentTab } from "../utils";
 import { userService } from "../services/user.service";
 import { authService } from "../services/auth.service";
 
@@ -101,6 +101,7 @@ const UserHub: React.FC = () => {
     avatar: "",
     plan: "Free",
     planType: "free",
+    isAdmin: false,
   });
 
   // Load initial email from storage if available
@@ -282,6 +283,38 @@ const UserHub: React.FC = () => {
       navigateToPageInCurrentTab("PLAN");
       setTimeout(() => navigateToPage("PLAN"), 200);
     }, 300);
+  };
+
+  const handleOpenAdminDashboard = async () => {
+    if (!userProfile.isAdmin) {
+      showToast("You need admin access to open the dashboard.", "error");
+      return;
+    }
+
+    const targetUrl = EXTERNAL_LINKS.ADMIN_DASHBOARD;
+    if (!targetUrl) {
+      showToast("Admin dashboard URL is not configured.", "error");
+      return;
+    }
+
+    logger.info("Navigating to admin dashboard from settings", { targetUrl });
+
+    try {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (tab?.id) {
+        await chrome.tabs.update(tab.id, { url: targetUrl });
+        return;
+      }
+    } catch (error) {
+      logger.error("Failed to navigate to admin dashboard in current tab", error);
+    }
+
+    try {
+      chrome.tabs.create({ url: targetUrl });
+    } catch (error) {
+      logger.error("Failed to open admin dashboard in new tab", error);
+      showToast("Không mở được trang admin dashboard.", "error");
+    }
   };
 
   const handleViewDetails = () => {
@@ -541,7 +574,6 @@ const UserHub: React.FC = () => {
         onSectionChange={handleTabChange}
         isMobileMenuOpen={isMobileMenuOpen}
         onCloseMobileMenu={() => setIsMobileMenuOpen(false)}
-        isAdmin={userProfile.isAdmin}
       />
 
       {/* Main Content Area */}
@@ -617,6 +649,18 @@ const UserHub: React.FC = () => {
 
                 {/* Actions */}
                 <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-3 w-full sm:w-auto">
+                  {userProfile.isAdmin && (
+                    <button
+                      onClick={handleOpenAdminDashboard}
+                      className="w-full sm:w-auto px-4 py-2 bg-white/10 border border-white/20 hover:bg-white/20 text-white rounded-lg transition-colors flex items-center justify-center space-x-2 text-sm sm:text-base shadow-sm"
+                    >
+                      <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6l8 4v4c0 4-4 7-8 8-4-1-8-4-8-8v-4l8-4z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.5 12.5l2 2 3-3.5" />
+                      </svg>
+                      <span>Admin</span>
+                    </button>
+                  )}
                   <button
                     onClick={handleUpgrade}
                     className="w-full sm:w-auto px-4 py-2 bg-white/10 border border-white/20 hover:bg-white/20 text-white rounded-lg transition-colors flex items-center justify-center space-x-2 text-sm sm:text-base shadow-sm"

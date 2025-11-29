@@ -25,6 +25,7 @@ const scanConfig: ScanConfig = {
 };
 
 let isPageBlocked = false;
+let currentBlockedPattern: string | null = null;
 
 const isExtensionContextValid = (): boolean => {
   try {
@@ -92,26 +93,40 @@ const normalizePattern = (pattern: string): string => {
   }
 };
 
+const normalizeHostname = (hostname: string): string =>
+  (hostname || "").replace(/^www\./, "").toLowerCase();
+
 const matchesPattern = (hostname: string, _fullUrl: string, pattern: string): boolean => {
   const normalizedPattern = normalizePattern(pattern);
-  if (!normalizedPattern) return false;
+  const normalizedHostname = normalizeHostname(hostname);
+  if (!normalizedPattern || !normalizedHostname) return false;
 
   if (normalizedPattern.startsWith("*.")) {
     const base = normalizedPattern.slice(2);
-    return hostname === base || hostname.endsWith(`.${base}`);
+    return normalizedHostname === base || normalizedHostname.endsWith(`.${base}`);
   }
 
-  return hostname === normalizedPattern;
+  return normalizedHostname === normalizedPattern;
+};
+
+const readBlacklistFrom = async (area: "sync" | "local"): Promise<string[]> => {
+  const list = await readFromStorage<string[]>(STORAGE_KEYS.BLACKLIST, area);
+  return Array.isArray(list) ? list.filter(Boolean) : [];
 };
 
 const getBlacklist = async (): Promise<string[]> => {
   try {
-    const list = await readFromStorage<string[]>(STORAGE_KEYS.BLACKLIST, "sync");
-    if (Array.isArray(list)) {
-      return list.filter(Boolean);
-    }
+    const syncList = await readBlacklistFrom("sync");
+    if (syncList.length) return syncList;
   } catch (error) {
-    logger.warn("Failed to read blacklist from storage", error);
+    logger.warn("Failed to read blacklist from sync storage", error);
+  }
+
+  try {
+    const localList = await readBlacklistFrom("local");
+    if (localList.length) return localList;
+  } catch (error) {
+    logger.warn("Failed to read blacklist from local storage", error);
   }
   return [];
 };
@@ -128,8 +143,10 @@ const applyBlacklistOverlay = (pattern: string): void => {
     overlay.style.cssText = `
       position: fixed;
       inset: 0;
-      background: radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.15), rgba(15, 23, 42, 0.95)),
-                  radial-gradient(circle at 80% 0%, rgba(59, 130, 246, 0.2), rgba(15, 23, 42, 0.9));
+      background:
+        radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.08), rgba(9, 12, 24, 0.98)),
+        radial-gradient(circle at 80% 0%, rgba(59, 130, 246, 0.12), rgba(7, 10, 20, 0.98)),
+        rgba(5, 8, 16, 0.98);
       color: #e2e8f0;
       z-index: 2147483647;
       display: flex;
@@ -139,7 +156,10 @@ const applyBlacklistOverlay = (pattern: string): void => {
       text-align: center;
       padding: 32px;
       font-family: 'Inter', system-ui, -apple-system, sans-serif;
-      backdrop-filter: blur(6px);
+      backdrop-filter: blur(10px) brightness(0.6);
+      pointer-events: all;
+      width: 100vw;
+      height: 100vh;
     `;
 
     const card = document.createElement("div");
@@ -204,7 +224,7 @@ const applyBlacklistOverlay = (pattern: string): void => {
 
 const checkAndBlockCurrentPage = async (): Promise<boolean> => {
   if (location.protocol === "chrome-extension:") return false;
-  const hostname = window.location.hostname.toLowerCase();
+  const hostname = normalizeHostname(window.location.hostname);
   const fullUrl = window.location.href.toLowerCase();
   const blacklist = await getBlacklist();
 

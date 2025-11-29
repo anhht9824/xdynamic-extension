@@ -1,3 +1,4 @@
+<!-- markdownlint-disable -->
 # Frontend Apps
 
 This folder contains three independent frontends. Each has its own toolchain and

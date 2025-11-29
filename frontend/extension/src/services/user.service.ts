@@ -20,11 +20,17 @@ export class UserService {
 
     if (response.success && response.data) {
       const data = response.data as any;
+      const isAdmin =
+        data.isAdmin ??
+        data.is_admin ??
+        data.role === 'admin' ??
+        (Array.isArray(data.roles) && data.roles.includes('admin'));
       // Map backend fields to frontend interface if needed
       return {
         ...response.data,
         fullName: response.data.fullName || data.name || data.full_name || data.username || '',
         id: response.data.id || data._id || '',
+        isAdmin: Boolean(isAdmin),
       };
     }
 

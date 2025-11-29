@@ -273,12 +273,65 @@ const WebsiteManagement: React.FC<WebsiteManagementProps> = ({ onSave }) => {
   const [validationError, setValidationError] = useState<string | null>(null);
   const [uploadingType, setUploadingType] = useState<ListType | null>(null);
 
+  const LOCAL_CACHE_KEYS = {
+    [STORAGE_KEYS.WHITELIST]: "xdynamic_cache_whitelist",
+    [STORAGE_KEYS.BLACKLIST]: "xdynamic_cache_blacklist",
+  } as const;
+
+  const readFromLocalCache = (key: string): string[] => {
+    try {
+      const raw = localStorage.getItem(LOCAL_CACHE_KEYS[key as keyof typeof LOCAL_CACHE_KEYS]);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed.filter(Boolean) : [];
+    } catch {
+      return [];
+    }
+  };
+
+  const writeToLocalCache = (key: string, values: string[]) => {
+    try {
+      localStorage.setItem(
+        LOCAL_CACHE_KEYS[key as keyof typeof LOCAL_CACHE_KEYS],
+        JSON.stringify(values)
+      );
+    } catch (error) {
+      logger.warn(`Không thể lưu cache ${key} vào localStorage`, error);
+    }
+  };
+
+  const readListWithFallback = async (key: string): Promise<string[]> => {
+    const readArea = async (area: "sync" | "local") => {
+      const list = await readFromStorage<string[]>(key, area);
+      return Array.isArray(list) ? list.filter(Boolean) : [];
+    };
+
+    try {
+      const syncList = await readArea("sync");
+      if (syncList.length) return syncList;
+    } catch (error) {
+      logger.warn(`Không thể tải ${key} từ sync storage`, error);
+    }
+
+    try {
+      const localList = await readArea("local");
+      if (localList.length) return localList;
+    } catch (error) {
+      logger.warn(`Không thể tải ${key} từ local storage`, error);
+    }
+
+    const cached = readFromLocalCache(key);
+    if (cached.length) return cached;
+
+    return [];
+  };
+
   useEffect(() => {
     const loadCachedLists = async () => {
       try {
         const [cachedWhitelist, cachedBlacklist] = await Promise.all([
-          readFromStorage<string[]>(STORAGE_KEYS.WHITELIST, "sync"),
-          readFromStorage<string[]>(STORAGE_KEYS.BLACKLIST, "sync"),
+          readListWithFallback(STORAGE_KEYS.WHITELIST),
+          readListWithFallback(STORAGE_KEYS.BLACKLIST),
         ]);
 
         if (cachedWhitelist?.length) {
@@ -298,10 +351,24 @@ const WebsiteManagement: React.FC<WebsiteManagementProps> = ({ onSave }) => {
 
   const persistLists = async (nextWhitelist: URLItem[], nextBlacklist: URLItem[]) => {
     try {
-      await Promise.all([
-        writeToStorage(STORAGE_KEYS.WHITELIST, nextWhitelist.map((item) => item.url), "sync"),
-        writeToStorage(STORAGE_KEYS.BLACKLIST, nextBlacklist.map((item) => item.url), "sync"),
+      const whitelistUrls = nextWhitelist.map((item) => item.url);
+      const blacklistUrls = nextBlacklist.map((item) => item.url);
+
+      const writes = await Promise.allSettled([
+        writeToStorage(STORAGE_KEYS.WHITELIST, whitelistUrls, "sync"),
+        writeToStorage(STORAGE_KEYS.BLACKLIST, blacklistUrls, "sync"),
+        writeToStorage(STORAGE_KEYS.WHITELIST, whitelistUrls, "local"),
+        writeToStorage(STORAGE_KEYS.BLACKLIST, blacklistUrls, "local"),
       ]);
+
+      const failed = writes.filter((result) => result.status === "rejected");
+      if (failed.length) {
+        logger.warn("Không thể lưu cache whitelist/blacklist", failed);
+      }
+
+      // Luôn lưu thêm vào localStorage để đảm bảo tồn tại khi không có Chrome storage (dev/offline)
+      writeToLocalCache(STORAGE_KEYS.WHITELIST, whitelistUrls);
+      writeToLocalCache(STORAGE_KEYS.BLACKLIST, blacklistUrls);
     } catch (error) {
       logger.warn("Không thể lưu cache whitelist/blacklist", error);
     }
@@ -313,6 +380,13 @@ const WebsiteManagement: React.FC<WebsiteManagementProps> = ({ onSave }) => {
         filterService.getWhitelist(),
         filterService.getBlacklist(),
       ]);
+      const hasCached = whitelist.length > 0 || blacklist.length > 0;
+
+      if (!white.length && !black.length && hasCached) {
+        logger.warn("API trả về danh sách trống, giữ nguyên cache hiện tại");
+        return;
+      }
+
       setWhitelist(white);
       setBlacklist(black);
       await persistLists(white, black);

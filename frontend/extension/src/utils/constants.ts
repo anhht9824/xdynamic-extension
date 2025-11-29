@@ -6,6 +6,11 @@
 export { EXTENSION_PAGES } from "../core/config/pages";
 export { STORAGE_KEYS } from "../core/config/storageKeys";
 
+// External apps/links
+export const EXTERNAL_LINKS = {
+  ADMIN_DASHBOARD: import.meta.env.VITE_ADMIN_DASHBOARD_URL || "http://localhost:5173",
+} as const;
+
 // Timing constants
 export const TIMING = {
   DEBOUNCE_DELAY: 300,

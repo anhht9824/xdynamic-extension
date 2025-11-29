@@ -1,3 +1,4 @@
+<!-- markdownlint-disable -->
 # XDynamic Codebase Architecture
 
 This repository now isolates each deployable surface so backend and frontend code no longer overlap.

@@ -11,7 +11,6 @@ interface SettingsSidebarProps {
   onSectionChange: (section: SettingsSection) => void;
   isMobileMenuOpen?: boolean;
   onCloseMobileMenu?: () => void;
-  isAdmin?: boolean;
 }
 
 const settingsSections = [
@@ -58,17 +57,12 @@ const settingsSections = [
   },
 ];
 
-import { useNavigate } from "react-router-dom";
-
 const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
   activeSection,
   onSectionChange,
   isMobileMenuOpen,
   onCloseMobileMenu,
-  isAdmin,
 }) => {
-  const navigate = useNavigate();
-
   const handleSectionClick = (section: SettingsSection) => {
     onSectionChange(section);
     onCloseMobileMenu?.();
@@ -184,26 +178,6 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
               </button>
             );
           })}
-
-          {/* Admin Link */}
-          {isAdmin && (
-            <button
-              onClick={() => navigate("/admin/dashboard")}
-              className="w-full flex items-start gap-3 px-3 py-3 rounded-lg text-left transition-all duration-200 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-            >
-              <div className="flex-shrink-0 mt-0.5 text-gray-400">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-                </svg>
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="font-medium text-sm">Admin Panel</div>
-                <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                  Quản lý hệ thống
-                </div>
-              </div>
-            </button>
-          )}
         </nav>
 
         {/* Sidebar Footer - Help Section */}
