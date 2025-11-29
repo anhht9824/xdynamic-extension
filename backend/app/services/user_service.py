@@ -88,6 +88,7 @@ class UserService:
             plan=plan_label,
             planType=plan_type,
             credits=user.credits,
+            isAdmin=bool(user.is_admin),
         )
 
     def get_profile(self, user_id: int) -> UserProfile:

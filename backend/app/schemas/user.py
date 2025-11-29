@@ -49,6 +49,7 @@ class UserProfile(BaseModel):
     plan: str
     planType: str
     credits: float
+    isAdmin: bool = False
 
     class Config:
         from_attributes = True

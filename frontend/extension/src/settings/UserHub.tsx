@@ -541,6 +541,7 @@ const UserHub: React.FC = () => {
         onSectionChange={handleTabChange}
         isMobileMenuOpen={isMobileMenuOpen}
         onCloseMobileMenu={() => setIsMobileMenuOpen(false)}
+        isAdmin={userProfile.isAdmin}
       />
 
       {/* Main Content Area */}
