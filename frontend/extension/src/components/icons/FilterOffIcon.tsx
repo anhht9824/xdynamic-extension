@@ -1,6 +1,6 @@
 import React from "react";
 
-export const FilterOffIcon = (props: React.SVGProps<SVGSVGElement>) => {
+const FilterOffIcon = (props: React.SVGProps<SVGSVGElement>) => {
   return (
     <svg width="54" height="27" viewBox="0 0 54 27" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
       <rect opacity="0.25" width="54" height="27" rx="13.5" fill="#EF4444"/>
@@ -9,3 +9,5 @@ export const FilterOffIcon = (props: React.SVGProps<SVGSVGElement>) => {
     </svg>
   );
 };
+
+export default FilterOffIcon;

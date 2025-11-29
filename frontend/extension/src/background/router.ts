@@ -42,6 +42,7 @@ const handlers: Partial<Record<RuntimeMessage["type"], MessageHandler>> = {
     return false;
   },
   ANALYZE_IMAGE: (message, sendResponse) => {
+    if (message.type !== "ANALYZE_IMAGE") return false;
     detectionService
       .analyzeImage(message.url, message.context)
       .then((result) =>
