@@ -13,6 +13,7 @@ class User(Base):
     avatar = Column(String, nullable=True)
     hashed_password = Column(String, nullable=True)  # For email/password auth
     google_id = Column(String, unique=True, nullable=True, index=True)  # For OAuth
+    is_active = Column(Integer, default=1) # 1: Active, 0: Inactive
     is_admin = Column(Integer, default=0) # 0: User, 1: Admin
     credits = Column(Float, default=0.0)  # Wallet balance in VND
     created_at = Column(DateTime, default=datetime.utcnow)

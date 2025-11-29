@@ -6,7 +6,8 @@ from app.database import get_db
 from app.services.admin_service import AdminService
 from app.schemas.admin import (
     OverviewStats, UsageStats, AccuracyStats, TopCategory, 
-    Activity, Report, ReportAction
+    Activity, Report, ReportAction,
+    AdminUserList, AdminUserUpdate, SystemSettingItem, SystemSettingsUpdate
 )
 # Assuming there is a get_current_user dependency, likely in app.controllers.auth_controller or app.middleware
 # Based on user_controller.py check, I will find out where it is.
@@ -78,10 +79,40 @@ def get_reports(
 ):
     return AdminService.get_reports(db, page, limit, status, date_range, category, search)
 
-@router.post("/reports/action")
-def handle_report_action(
-    action_data: ReportAction,
+
+
+@router.get("/users", response_model=AdminUserList)
+def get_users(
+    page: int = 1,
+    limit: int = 10,
+    search: Optional[str] = None,
+    status: Optional[str] = None,
+    role: Optional[str] = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_admin)
 ):
-    return AdminService.handle_report_action(db, action_data)
+    return AdminService.get_users(db, page, limit, search, status, role)
+
+@router.put("/users/{user_id}/status")
+def update_user_status(
+    user_id: int,
+    update_data: AdminUserUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_admin)
+):
+    return AdminService.update_user_status(db, user_id, update_data)
+
+@router.get("/settings", response_model=List[SystemSettingItem])
+def get_system_settings(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_admin)
+):
+    return AdminService.get_system_settings(db)
+
+@router.put("/settings")
+def update_system_settings(
+    settings_update: SystemSettingsUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_admin)
+):
+    return AdminService.update_system_settings(db, settings_update)

@@ -51,7 +51,8 @@ class FilterService:
 
     def add_item(self, user_id: int, list_key: str, url: str) -> URLItem:
         settings = self._ensure_settings(user_id)
-        security = settings.security or {}
+        # Create a shallow copy to ensure SQLAlchemy detects the change
+        security = dict(settings.security or {})
         items: List[Dict] = list(security.get(list_key, []) or [])
 
         normalized_url = url.strip().lower()
@@ -73,7 +74,8 @@ class FilterService:
 
     def remove_item(self, user_id: int, list_key: str, item_id: str) -> bool:
         settings = self._ensure_settings(user_id)
-        security = settings.security or {}
+        # Create a shallow copy to ensure SQLAlchemy detects the change
+        security = dict(settings.security or {})
         items: List[Dict] = list(security.get(list_key, []) or [])
         filtered = [item for item in items if str(item.get("id")) != str(item_id)]
 

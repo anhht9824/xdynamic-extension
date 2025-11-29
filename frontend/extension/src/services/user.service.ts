@@ -10,8 +10,6 @@ export interface UserSettings {
   theme: string;
 }
 
-
-
 export class UserService {
   async getProfile(): Promise<UserProfile> {
     const response = await apiService.get<UserProfile>(

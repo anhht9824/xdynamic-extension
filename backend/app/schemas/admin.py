@@ -8,6 +8,8 @@ class OverviewStats(BaseModel):
     active_today: int
     content_blocked: int
     pending_reports: int
+    total_revenue: float
+    blocked_images_count: int
 
 class UsageDataPoint(BaseModel):
     date: str
@@ -57,4 +59,32 @@ class Report(BaseModel):
 
 class ReportAction(BaseModel):
     report_ids: List[str]
-    action: str # 'approve' | 'reject' | 'review'
+    action: str
+
+
+class AdminUser(BaseModel):
+    id: int
+    email: str
+    full_name: Optional[str]
+    is_active: bool
+    is_admin: bool
+    created_at: datetime
+    last_login: Optional[datetime]
+
+class AdminUserList(BaseModel):
+    users: List[AdminUser]
+    total: int
+    page: int
+    limit: int
+
+class AdminUserUpdate(BaseModel):
+    is_active: Optional[bool] = None
+    is_admin: Optional[bool] = None
+
+class SystemSettingItem(BaseModel):
+    key: str
+    value: Optional[str]
+    description: Optional[str]
+
+class SystemSettingsUpdate(BaseModel):
+    settings: List[SystemSettingItem]

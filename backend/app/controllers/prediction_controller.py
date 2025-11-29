@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 import time
 import logging
+import json
 
 from app.database import get_db
 from app.services.subscription_service import SubscriptionService
@@ -74,7 +75,8 @@ async def predict(
         endpoint="/api/v1/predict",
         method="POST",
         status_code=200,
-        response_time_ms=response_time
+        response_time_ms=response_time,
+        meta_data=json.dumps({"blocked": not result["active"], "classes": result["classes"]})
     )
     
     # Return result with remaining quota

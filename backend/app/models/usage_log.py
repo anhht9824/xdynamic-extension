@@ -14,6 +14,7 @@ class UsageLog(Base):
     status_code = Column(Integer, nullable=True)
     response_time_ms = Column(Float, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    meta_data = Column(String, nullable=True) # JSON string for flexibility
     
     # Relationships
     user = relationship("User", back_populates="usage_logs")

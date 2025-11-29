@@ -8,8 +8,12 @@ from app.models.user import User
 from app.models.usage_log import UsageLog
 from app.schemas.admin import (
     OverviewStats, UsageStats, UsageDataPoint, AccuracyStats,
-    TopCategory, Activity, ActivityType, Report, ReportStatus, ReportAction
+    TopCategory, Activity, ActivityType, Report, ReportStatus, ReportAction,
+    AdminUser, AdminUserList, AdminUserUpdate, SystemSettingItem, SystemSettingsUpdate
 )
+from app.models.transaction import Transaction, TransactionStatus, TransactionType
+from app.models.system_setting import SystemSetting
+import json
 
 # Mock Data Store for Reports (In-memory for demo purposes)
 # In a real app, this would be a database table
@@ -53,11 +57,28 @@ class AdminService:
         
         pending_reports = len([r for r in MOCK_REPORTS if r.status == ReportStatus.PENDING])
         
+        # Calculate total revenue
+        total_revenue = db.query(func.sum(Transaction.amount)).filter(
+            Transaction.status == TransactionStatus.SUCCESS,
+            Transaction.type.in_([TransactionType.TOPUP, TransactionType.PURCHASE])
+        ).scalar() or 0.0
+
+        # Calculate blocked images count
+        # We need to check meta_data for "blocked": true
+        # Since meta_data is a string, we might need to do a like query or load and filter
+        # For better performance in production, this should be a separate column or indexed JSONB
+        # For now, we'll use a simple LIKE query as a heuristic
+        blocked_images_count = db.query(UsageLog).filter(
+            UsageLog.meta_data.like('%"blocked": true%')
+        ).count()
+
         return OverviewStats(
             total_users=total_users,
             active_today=active_today,
-            content_blocked=content_blocked,
-            pending_reports=pending_reports
+            content_blocked=content_blocked, # This was the mock one, maybe we should replace it?
+            pending_reports=pending_reports,
+            total_revenue=total_revenue,
+            blocked_images_count=blocked_images_count
         )
 
     @staticmethod
@@ -179,16 +200,98 @@ class AdminService:
             "limit": limit
         }
 
+
+
     @staticmethod
-    def handle_report_action(db: Session, action_data: ReportAction):
-        count = 0
-        for report in MOCK_REPORTS:
-            if report.id in action_data.report_ids:
-                if action_data.action == "approve":
-                    report.status = ReportStatus.APPROVED
-                elif action_data.action == "reject":
-                    report.status = ReportStatus.REJECTED
-                elif action_data.action == "review":
-                    report.status = ReportStatus.REVIEWED
-                count += 1
-        return {"processed": count, "action": action_data.action}
+    def get_users(
+        db: Session, 
+        page: int = 1, 
+        limit: int = 10, 
+        search: Optional[str] = None,
+        status: Optional[str] = None,
+        role: Optional[str] = None
+    ) -> AdminUserList:
+        query = db.query(User)
+        
+        if search:
+            search = f"%{search}%"
+            query = query.filter(
+                (User.email.ilike(search)) | (User.name.ilike(search))
+            )
+            
+        if status:
+            if status == "Active":
+                query = query.filter(User.is_active == True)
+            elif status == "Banned":
+                query = query.filter(User.is_active == False)
+                
+        if role:
+            if role == "Admin":
+                query = query.filter(User.is_admin == True)
+            elif role == "User":
+                query = query.filter(User.is_admin == False)
+                
+        total = query.count()
+        users = query.offset((page - 1) * limit).limit(limit).all()
+        
+        admin_users = []
+        for user in users:
+            admin_users.append(AdminUser(
+                id=user.id,
+                email=user.email,
+                full_name=user.name,
+                is_active=user.is_active,
+                is_admin=user.is_admin,
+                created_at=user.created_at,
+                last_login=datetime.utcnow() # Mock for now as User model might not have last_login
+            ))
+            
+        return AdminUserList(
+            users=admin_users,
+            total=total,
+            page=page,
+            limit=limit
+        )
+
+    @staticmethod
+    def update_user_status(db: Session, user_id: int, update_data: AdminUserUpdate):
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise ValueError("User not found")
+            
+        if update_data.is_active is not None:
+            user.is_active = update_data.is_active
+            
+        if update_data.is_admin is not None:
+            user.is_admin = update_data.is_admin
+            
+        db.commit()
+        db.refresh(user)
+        return {"success": True, "message": "User updated successfully"}
+
+    @staticmethod
+    def get_system_settings(db: Session) -> List[SystemSettingItem]:
+        settings = db.query(SystemSetting).all()
+        return [
+            SystemSettingItem(key=s.key, value=s.value, description=s.description)
+            for s in settings
+        ]
+
+    @staticmethod
+    def update_system_settings(db: Session, settings_update: SystemSettingsUpdate):
+        for item in settings_update.settings:
+            setting = db.query(SystemSetting).filter(SystemSetting.key == item.key).first()
+            if setting:
+                setting.value = item.value
+                if item.description:
+                    setting.description = item.description
+            else:
+                new_setting = SystemSetting(
+                    key=item.key,
+                    value=item.value,
+                    description=item.description
+                )
+                db.add(new_setting)
+        
+        db.commit()
+        return {"success": True, "message": "Settings updated successfully"}

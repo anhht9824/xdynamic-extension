@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { DashboardLayout } from '../components/DashboardLayout';
 import { 
   ChevronDown, 
@@ -21,57 +21,51 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { TableSkeleton } from '../components/ui/SkeletonLoader';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  avatar: string;
-  joinedDate: string;
-  lastActive: string;
-  role: 'Admin' | 'User' | 'Moderator';
-  status: 'Active' | 'Inactive' | 'Banned';
-}
-
-const mockUsers: User[] = [
-  { id: '1', name: 'John Doe', email: 'john@example.com', avatar: 'JD', joinedDate: '2024-01-15', lastActive: '2 hours ago', role: 'User', status: 'Active' },
-  { id: '2', name: 'Sarah Smith', email: 'sarah@example.com', avatar: 'SS', joinedDate: '2024-02-20', lastActive: '1 day ago', role: 'Moderator', status: 'Active' },
-  { id: '3', name: 'Mike Johnson', email: 'mike@example.com', avatar: 'MJ', joinedDate: '2024-03-10', lastActive: '3 days ago', role: 'User', status: 'Inactive' },
-  { id: '4', name: 'Emily Davis', email: 'emily@example.com', avatar: 'ED', joinedDate: '2024-01-05', lastActive: '5 mins ago', role: 'Admin', status: 'Active' },
-  { id: '5', name: 'David Wilson', email: 'david@example.com', avatar: 'DW', joinedDate: '2023-12-01', lastActive: '1 week ago', role: 'User', status: 'Banned' },
-];
+import { adminService, User } from '../services/admin.service';
 
 export const UserManagement: React.FC = () => {
-  const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
+  const [users, setUsers] = useState<User[]>([]);
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [selectedUsers, setSelectedUsers] = useState<Set<number>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [roleFilter, setRoleFilter] = useState('All');
   const [isLoading, setIsLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const itemsPerPage = 10;
 
-  const debouncedSearch = useDebounce(searchQuery, 300);
-  const { toasts, success } = useToast();
+  const debouncedSearch = useDebounce(searchQuery, 500);
+  const { toasts, success, error } = useToast();
 
-  // Filtered users based on search and filters
-  const filteredUsers = useMemo(() => {
-    return mockUsers.filter(user => {
-      const matchesSearch = user.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-                           user.email.toLowerCase().includes(debouncedSearch.toLowerCase());
-      const matchesStatus = statusFilter === 'All' || user.status === statusFilter;
-      const matchesRole = roleFilter === 'All' || user.role === roleFilter;
-      
-      return matchesSearch && matchesStatus && matchesRole;
-    });
-  }, [debouncedSearch, statusFilter, roleFilter]);
+  const fetchUsers = async () => {
+    setIsLoading(true);
+    try {
+      const response = await adminService.getUsers(
+        currentPage, 
+        itemsPerPage, 
+        debouncedSearch, 
+        statusFilter === 'All' ? '' : statusFilter, 
+        roleFilter === 'All' ? '' : roleFilter
+      );
+      setUsers(response.users);
+      setTotalUsers(response.total);
+    } catch (err) {
+      error('Failed to fetch users');
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchUsers();
+  }, [currentPage, debouncedSearch, statusFilter, roleFilter]);
 
   // Pagination
-  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
-  const paginatedUsers = filteredUsers.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  const totalPages = Math.ceil(totalUsers / itemsPerPage);
+  // No client-side slicing needed as backend handles it
 
-  const toggleUser = (userId: string) => {
+  const toggleUser = (userId: number) => {
     const newSelected = new Set(selectedUsers);
     if (newSelected.has(userId)) {
       newSelected.delete(userId);
@@ -82,21 +76,38 @@ export const UserManagement: React.FC = () => {
   };
 
   const toggleAll = () => {
-    if (selectedUsers.size === paginatedUsers.length) {
+    if (selectedUsers.size === users.length) {
       setSelectedUsers(new Set());
     } else {
-      setSelectedUsers(new Set(paginatedUsers.map(u => u.id)));
+      setSelectedUsers(new Set(users.map(u => u.id)));
     }
   };
 
   const handleBulkAction = async (action: 'activate' | 'ban') => {
     setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
-      setSelectedUsers(new Set());
-      success(`Successfully ${action === 'activate' ? 'activated' : 'banned'} ${selectedUsers.size} user(s)`);
-    }, 1000);
+    try {
+        // Sequentially update for now as backend doesn't support bulk yet
+        for (const userId of selectedUsers) {
+            await adminService.updateUserStatus(userId, action === 'activate', null);
+        }
+        success(`Successfully ${action === 'activate' ? 'activated' : 'banned'} ${selectedUsers.size} user(s)`);
+        fetchUsers();
+        setSelectedUsers(new Set());
+    } catch (err) {
+        error('Failed to perform bulk action');
+    } finally {
+        setIsLoading(false);
+    }
+  };
+
+  const handleStatusChange = async (userId: number, currentStatus: boolean) => {
+      try {
+          await adminService.updateUserStatus(userId, !currentStatus, null);
+          success(`User ${!currentStatus ? 'activated' : 'banned'} successfully`);
+          fetchUsers();
+      } catch (err) {
+          error('Failed to update user status');
+      }
   };
 
   const handleExport = () => {
@@ -140,7 +151,7 @@ export const UserManagement: React.FC = () => {
           <div>
             <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
             <p className="text-sm text-gray-500 mt-1">
-              Manage user accounts and permissions • {filteredUsers.length} total users
+              Manage user accounts and permissions • {totalUsers} total users
             </p>
           </div>
           <div className="flex items-center space-x-3">
@@ -258,7 +269,7 @@ export const UserManagement: React.FC = () => {
         <div className="card overflow-hidden">
           {isLoading ? (
             <TableSkeleton rows={5} columns={8} />
-          ) : filteredUsers.length === 0 ? (
+          ) : users.length === 0 ? (
             <EmptyState
               icon={UsersIcon}
               title="No users found"
@@ -288,7 +299,7 @@ export const UserManagement: React.FC = () => {
                     <th className="px-6 py-4 text-left">
                       <input 
                         type="checkbox" 
-                        checked={paginatedUsers.length > 0 && selectedUsers.size === paginatedUsers.length}
+                        checked={users.length > 0 && selectedUsers.size === users.length}
                         onChange={toggleAll}
                         className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary-500"
                       />
@@ -317,7 +328,7 @@ export const UserManagement: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {paginatedUsers.map((user) => (
+                  {users.map((user) => (
                     <tr key={user.id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-6 py-4">
                         <input 
@@ -330,28 +341,28 @@ export const UserManagement: React.FC = () => {
                       <td className="px-6 py-4">
                         <div className="flex items-center space-x-3">
                           <div className="w-10 h-10 bg-gradient-to-br from-primary to-primary-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-                            {user.avatar}
+                            {user.full_name || user.email.substring(0, 2).toUpperCase()}
                           </div>
-                          <span className="font-medium text-gray-900">{user.name}</span>
+                          <span className="font-medium text-gray-900">{user.full_name || 'No Name'}</span>
                         </div>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-600">
                         {user.email}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-600">
-                        {user.joinedDate}
+                        {new Date(user.created_at).toLocaleDateString()}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-600">
-                        {user.lastActive}
+                        {user.last_login ? new Date(user.last_login).toLocaleDateString() : 'Never'}
                       </td>
                       <td className="px-6 py-4">
-                        <span className={`badge ${getRoleBadgeColor(user.role)}`}>
-                          {user.role}
+                        <span className={`badge ${getRoleBadgeColor(user.is_admin ? 'Admin' : 'User')}`}>
+                          {user.is_admin ? 'Admin' : 'User'}
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <span className={`badge ${getStatusBadgeColor(user.status)}`}>
-                          {user.status}
+                        <span className={`badge ${getStatusBadgeColor(user.is_active ? 'Active' : 'Banned')}`}>
+                          {user.is_active ? 'Active' : 'Banned'}
                         </span>
                       </td>
                       <td className="px-6 py-4">
@@ -363,11 +374,11 @@ export const UserManagement: React.FC = () => {
                             <Edit className="w-4 h-4" />
                           </button>
                           <button 
-                            className="p-2 text-danger hover:bg-red-50 rounded transition-colors"
-                            title="Ban user"
-                            onClick={() => success(`User ${user.name} has been banned`)}
+                            className={`p-2 ${user.is_active ? 'text-danger hover:bg-red-50' : 'text-green-600 hover:bg-green-50'} rounded transition-colors`}
+                            title={user.is_active ? "Ban user" : "Activate user"}
+                            onClick={() => handleStatusChange(user.id, user.is_active)}
                           >
-                            <Ban className="w-4 h-4" />
+                            {user.is_active ? <Ban className="w-4 h-4" /> : <Check className="w-4 h-4" />}
                           </button>
                           <button className="p-2 text-gray-600 hover:bg-gray-100 rounded transition-colors">
                             <MoreVertical className="w-4 h-4" />
@@ -383,12 +394,12 @@ export const UserManagement: React.FC = () => {
         </div>
 
         {/* Pagination */}
-        {!isLoading && filteredUsers.length > 0 && (
+        {!isLoading && users.length > 0 && (
           <div className="card px-6 py-4 flex items-center justify-between">
             <p className="text-sm text-gray-600">
               Showing <span className="font-medium">{(currentPage - 1) * itemsPerPage + 1}</span> to{' '}
-              <span className="font-medium">{Math.min(currentPage * itemsPerPage, filteredUsers.length)}</span> of{' '}
-              <span className="font-medium">{filteredUsers.length}</span> results
+              <span className="font-medium">{Math.min(currentPage * itemsPerPage, totalUsers)}</span> of{' '}
+              <span className="font-medium">{totalUsers}</span> results
             </p>
             <div className="flex items-center space-x-2">
               <button 

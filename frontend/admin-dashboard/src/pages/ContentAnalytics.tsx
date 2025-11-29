@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '../components/DashboardLayout';
 import { 
   FileText, 
@@ -6,11 +6,13 @@ import {
   Video, 
   TrendingUp, 
   AlertTriangle,
-  CheckCircle,
   Activity,
   Download,
   Filter,
-  Eye
+  Eye,
+  DollarSign,
+  Shield,
+  Users
 } from 'lucide-react';
 import { 
   PieChart, 
@@ -26,40 +28,7 @@ import {
   Cell 
 } from 'recharts';
 
-const statsCards = [
-  { 
-    title: 'Total Content', 
-    value: '5,678', 
-    icon: FileText, 
-    color: 'text-blue-600', 
-    bgColor: 'bg-blue-50',
-    change: '+12%'
-  },
-  { 
-    title: 'Flagged Content', 
-    value: '234', 
-    icon: AlertTriangle, 
-    color: 'text-orange-600', 
-    bgColor: 'bg-orange-50',
-    change: '+8%'
-  },
-  { 
-    title: 'Approved Content', 
-    value: '5,444', 
-    icon: CheckCircle, 
-    color: 'text-green-600', 
-    bgColor: 'bg-green-50',
-    change: '+15%'
-  },
-  { 
-    title: 'Engagement Rate', 
-    value: '87%', 
-    icon: Activity, 
-    color: 'text-purple-600', 
-    bgColor: 'bg-purple-50',
-    change: '+3%'
-  },
-];
+
 
 const contentTypeData = [
   { name: 'Text', value: 60, color: '#007BFF' },
@@ -92,7 +61,30 @@ const topContent: ContentItem[] = [
   { id: '5', preview: 'Feature_Demo.mp4', type: 'Video', views: 5432, flags: 0, date: '2024-10-05' },
 ];
 
+import { adminService, OverviewStats } from '../services/admin.service';
+import { useToast } from '../hooks/useToast';
+import { ToastContainer } from '../components/ui/Toast';
+
 export const ContentAnalytics: React.FC = () => {
+  const [stats, setStats] = useState<OverviewStats | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const { toasts, error } = useToast();
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const data = await adminService.getOverviewStats();
+        setStats(data);
+      } catch (err) {
+        console.error('Failed to fetch stats', err);
+        error('Failed to load analytics data');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchStats();
+  }, []);
+
   const getTypeIcon = (type: string) => {
     switch (type) {
       case 'Text': return <FileText className="w-4 h-4" />;
@@ -104,6 +96,7 @@ export const ContentAnalytics: React.FC = () => {
 
   return (
     <DashboardLayout>
+      <ToastContainer toasts={toasts} />
       <div className="space-y-6">
         {/* Page Header */}
         <div className="flex items-center justify-between">
@@ -124,29 +117,89 @@ export const ContentAnalytics: React.FC = () => {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {statsCards.map((stat, index) => {
-            const Icon = stat.icon;
-            return (
-              <div key={index} className="card p-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-600">{stat.title}</p>
-                    <p className="text-3xl font-bold text-gray-900 mt-2">{stat.value}</p>
-                    <div className="flex items-center mt-2 text-sm">
-                      <TrendingUp className="w-4 h-4 text-green-600 mr-1" />
-                      <span className="text-green-600 font-medium">{stat.change}</span>
-                      <span className="text-gray-500 ml-1">vs last month</span>
+        {isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {[...Array(4)].map((_, i) => (
+                    <div key={i} className="card p-6 animate-pulse">
+                        <div className="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
+                        <div className="h-8 bg-gray-200 rounded w-3/4 mb-2"></div>
+                        <div className="h-4 bg-gray-200 rounded w-1/3"></div>
                     </div>
-                  </div>
-                  <div className={`${stat.bgColor} p-4 rounded-lg`}>
-                    <Icon className={`w-6 h-6 ${stat.color}`} />
-                  </div>
-                </div>
+                ))}
+            </div>
+        ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="card p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Total Revenue</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">
+                  {stats ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(stats.total_revenue) : '...'}
+                </p>
+                <p className="text-sm text-green-600 mt-1 flex items-center">
+                  <TrendingUp className="w-4 h-4 mr-1" />
+                  +12.5% from last month
+                </p>
               </div>
-            );
-          })}
+              <div className="bg-primary-50 p-4 rounded-lg">
+                <DollarSign className="w-8 h-8 text-primary" />
+              </div>
+            </div>
+          </div>
+
+          <div className="card p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Blocked Content</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">
+                  {stats ? stats.blocked_images_count : '...'}
+                </p>
+                <p className="text-sm text-red-600 mt-1 flex items-center">
+                  <AlertTriangle className="w-4 h-4 mr-1" />
+                  +5.2% detection rate
+                </p>
+              </div>
+              <div className="bg-red-50 p-4 rounded-lg">
+                <Shield className="w-8 h-8 text-red-600" />
+              </div>
+            </div>
+          </div>
+
+          <div className="card p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Active Users</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">
+                  {stats ? stats.active_today : '...'}
+                </p>
+                <p className="text-sm text-green-600 mt-1 flex items-center">
+                  <Users className="w-4 h-4 mr-1" />
+                  +8.1% new users
+                </p>
+              </div>
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <Users className="w-8 h-8 text-blue-600" />
+              </div>
+            </div>
+          </div>
+
+          <div className="card p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Avg. Response Time</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">142ms</p>
+                <p className="text-sm text-green-600 mt-1 flex items-center">
+                  <Activity className="w-4 h-4 mr-1" />
+                  -12ms improvement
+                </p>
+              </div>
+              <div className="bg-green-50 p-4 rounded-lg">
+                <Activity className="w-8 h-8 text-green-600" />
+              </div>
+            </div>
+          </div>
         </div>
+        )}
 
         {/* Charts Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

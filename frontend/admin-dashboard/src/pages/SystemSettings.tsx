@@ -14,14 +14,70 @@ import {
 
 type TabType = 'general' | 'ai-model' | 'notifications' | 'security';
 
+import { adminService, SystemSettingItem } from '../services/admin.service';
+import { useToast } from '../hooks/useToast';
+import { ToastContainer } from '../components/ui/Toast';
+
 export const SystemSettings: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('general');
+
+  const [isLoading, setIsLoading] = useState(false);
+  const { toasts, success, error } = useToast();
+
+  // Local state for form inputs (initialized from settings)
   const [autoModerate, setAutoModerate] = useState(true);
-  const [apiKey, setApiKey] = useState('sk-xdyn-••••••••••••••••');
+  const [apiKey, setApiKey] = useState('');
   const [threshold, setThreshold] = useState(80);
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [slackNotifications, setSlackNotifications] = useState(false);
   const [twoFactorAuth, setTwoFactorAuth] = useState(true);
+
+  React.useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const data = await adminService.getSystemSettings();
+        const settingsMap: Record<string, string> = {};
+        data.forEach(item => {
+          settingsMap[item.key] = item.value;
+        });
+
+        
+        // Initialize local state
+        if (settingsMap['auto_moderate']) setAutoModerate(settingsMap['auto_moderate'] === 'true');
+        if (settingsMap['api_key']) setApiKey(settingsMap['api_key']);
+        if (settingsMap['threshold']) setThreshold(Number(settingsMap['threshold']));
+        if (settingsMap['email_notifications']) setEmailNotifications(settingsMap['email_notifications'] === 'true');
+        if (settingsMap['slack_notifications']) setSlackNotifications(settingsMap['slack_notifications'] === 'true');
+        if (settingsMap['two_factor_auth']) setTwoFactorAuth(settingsMap['two_factor_auth'] === 'true');
+        
+      } catch (err) {
+        console.error('Failed to fetch settings', err);
+        error('Failed to load settings');
+      }
+    };
+    fetchSettings();
+  }, []);
+
+  const handleSave = async () => {
+    setIsLoading(true);
+    const updatedSettings: SystemSettingItem[] = [
+      { key: 'auto_moderate', value: String(autoModerate), description: 'Auto-moderate content' },
+      { key: 'api_key', value: apiKey, description: 'API Key for external services' },
+      { key: 'threshold', value: String(threshold), description: 'Detection threshold percentage' },
+      { key: 'email_notifications', value: String(emailNotifications), description: 'Enable email notifications' },
+      { key: 'slack_notifications', value: String(slackNotifications), description: 'Enable Slack notifications' },
+      { key: 'two_factor_auth', value: String(twoFactorAuth), description: 'Enable 2FA' },
+    ];
+
+    try {
+      await adminService.updateSystemSettings(updatedSettings);
+      success('Settings saved successfully');
+    } catch (err) {
+      error('Failed to save settings');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const tabs = [
     { id: 'general' as TabType, label: 'General', icon: SettingsIcon },
@@ -32,6 +88,7 @@ export const SystemSettings: React.FC = () => {
 
   return (
     <DashboardLayout>
+      <ToastContainer toasts={toasts} />
       <div className="space-y-6">
         {/* Page Header */}
         <div className="flex items-center justify-between">
@@ -333,9 +390,13 @@ export const SystemSettings: React.FC = () => {
                 <span>Export Config</span>
               </button>
             </div>
-            <button className="btn btn-primary flex items-center space-x-2">
+            <button 
+              className="btn btn-primary flex items-center space-x-2"
+              onClick={handleSave}
+              disabled={isLoading}
+            >
               <Save className="w-4 h-4" />
-              <span>Save Changes</span>
+              <span>{isLoading ? 'Saving...' : 'Save Changes'}</span>
             </button>
           </div>
         </div>
