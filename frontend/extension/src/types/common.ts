@@ -113,6 +113,7 @@ export interface UserProfile {
   avatar?: string;
   plan: string;
   planType: PlanType;
+  isAdmin?: boolean;
 }
 
 export interface DashboardMetrics {

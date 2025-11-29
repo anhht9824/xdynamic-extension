@@ -4,11 +4,12 @@
 Script chạy server FastAPI
 Sử dụng: python run.py [options]
 """
-import os
 import sys
 import argparse
 import uvicorn
 from pathlib import Path
+from typing import Optional
+from app.config import get_settings
 
 # Fix encoding cho Windows terminal
 if sys.platform == "win32":
@@ -19,57 +20,80 @@ if sys.platform == "win32":
         sys.stderr.reconfigure(encoding='utf-8')
 
 
+BACKEND_ROOT = Path(__file__).resolve().parent
+
+
+def _get_sqlite_path(db_url: str) -> Optional[Path]:
+    """Return absolute sqlite path if configured, otherwise None."""
+    if not db_url.startswith("sqlite://"):
+        return None
+
+    path_part = db_url.replace("sqlite:///", "", 1)
+    if path_part == ":memory:":
+        return None
+
+    db_path = Path(path_part)
+    if not db_path.is_absolute():
+        db_path = BACKEND_ROOT / db_path
+    return db_path
+
+
 def check_environment():
-    """Kiểm tra môi trường trước khi chạy"""
+    """Validate runtime requirements before starting the API."""
+    settings = get_settings()
     print("=" * 60)
     print("DANGEROUS OBJECTS AI API")
     print("=" * 60)
-    
+
     # Check Python version
     if sys.version_info < (3, 8):
         print("[ERROR] Python 3.8+ required!")
         sys.exit(1)
     print(f"[OK] Python version: {sys.version.split()[0]}")
-    
+
     # Check .env file
-    env_file = Path(".env")
+    env_file = BACKEND_ROOT / ".env"
     if not env_file.exists():
-        print("[WARNING] File .env không tồn tại!")
-        print("   Copy .env.example sang .env và điền thông tin:")
-        print("   cp .env.example .env")
-        
-        # Hỏi user có muốn tạo .env mẫu không
-        response = input("\n[?] Tạo file .env mẫu? (y/n): ").lower()
-        if response == 'y':
-            if Path(".env.example").exists():
+        print("[WARNING] .env is missing!")
+        print("   Copy .env.example to .env and fill in your values:")
+        print(f"   cp {env_file.name}.example {env_file.name}")
+
+        response = input("\\n[?] Create a template .env now? (y/n): ").lower()
+        if response == "y":
+            env_example = BACKEND_ROOT / ".env.example"
+            if env_example.exists():
                 import shutil
-                shutil.copy(".env.example", ".env")
-                print("[OK] Đã tạo file .env từ .env.example")
-                print("[WARNING] Hãy sửa các giá trị trong .env trước khi chạy!")
+
+                shutil.copy(env_example, env_file)
+                print("[OK] Created .env from .env.example")
+                print("[WARNING] Update the values in .env before running!")
                 sys.exit(0)
             else:
-                print("[ERROR] Không tìm thấy .env.example")
+                print("[ERROR] .env.example not found")
                 sys.exit(1)
     else:
-        print("[OK] File .env tồn tại")
-    
+        print("[OK] .env found")
+
     # Check model file
-    model_file = Path("mobilenetv2_dangerous_objects.pth")
+    model_file = BACKEND_ROOT / settings.MODEL_PATH
     if not model_file.exists():
-        print(f"[ERROR] Model file không tìm thấy: {model_file}")
-        print("   Đặt file model weights vào thư mục gốc!")
+        print(f"[ERROR] Model file not found: {model_file}")
+        print("   Place the model weights inside the backend directory!")
         sys.exit(1)
     else:
         size_mb = model_file.stat().st_size / (1024 * 1024)
         print(f"[OK] Model file: {model_file} ({size_mb:.1f} MB)")
-    
+
     # Check database
-    db_file = Path("app.db")
-    if db_file.exists():
-        print(f"[OK] Database: {db_file}")
+    db_file = _get_sqlite_path(settings.DATABASE_URL)
+    if db_file:
+        if db_file.exists():
+            print(f"[OK] Database: {db_file}")
+        else:
+            print(f"[INFO] Database will be created at: {db_file}")
     else:
-        print("[INFO]  Database sẽ được tạo tự động lần đầu chạy")
-    
+        print(f"[INFO] Database URL (non-sqlite): {settings.DATABASE_URL}")
+
     print("=" * 60)
     print()
 
@@ -204,5 +228,3 @@ Ví dụ:
 
 if __name__ == "__main__":
     main()
-
-

@@ -1,7 +1,9 @@
+import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from fastapi.staticfiles import StaticFiles
+from pathlib import Path
 
 from app.config import get_settings
 from app.database import init_db
@@ -64,7 +66,12 @@ def health():
     """Health check endpoint"""
     return {"status": "ok"}
 
-# Serve test HTML (simple MVC-like static)
-# Serve a simple FE for testing redirects (DEV only)
+# Serve static callback/payment pages for dev flows (kept outside backend code)
 if settings.DEBUG:
-    app.mount("/fe", StaticFiles(directory="public", html=True), name="fe")
+    repo_root = Path(__file__).resolve().parents[2]
+    fe_callbacks_dir = repo_root / "frontend" / "callback-pages"
+    
+    if fe_callbacks_dir.exists():
+        app.mount("/fe", StaticFiles(directory=fe_callbacks_dir, html=True), name="fe")
+    else:
+        logging.getLogger(__name__).warning("Callback pages not found at %s", fe_callbacks_dir)

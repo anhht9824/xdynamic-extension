@@ -24,6 +24,8 @@ class UserService:
         "autoUpdate": False,
         "speedLimit": 80,
         "customFilters": [],
+        "whitelist": [],
+        "blacklist": [],
         "vpnEnabled": False,
     }
     DEFAULT_PRIVACY: Dict[str, object] = {
@@ -88,6 +90,7 @@ class UserService:
             plan=plan_label,
             planType=plan_type,
             credits=user.credits,
+            isAdmin=bool(user.is_admin),
         )
 
     def get_profile(self, user_id: int) -> UserProfile:
