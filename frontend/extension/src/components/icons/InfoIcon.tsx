@@ -1,6 +1,6 @@
 import React from "react";
 
-export const InfoIcon = ({ variant = 'default', ...props }: React.SVGProps<SVGSVGElement> & { variant?: 'default' | 'active' }) => {
+const InfoIcon = ({ variant = 'default', ...props }: React.SVGProps<SVGSVGElement> & { variant?: 'default' | 'active' }) => {
   return (
     <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
       {variant === 'default' ? (
@@ -21,3 +21,5 @@ export const InfoIcon = ({ variant = 'default', ...props }: React.SVGProps<SVGSV
     </svg>
   );
 };
+
+export default InfoIcon;

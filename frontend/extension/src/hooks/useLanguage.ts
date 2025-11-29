@@ -30,7 +30,7 @@ export const useLanguage = () => {
     (key: keyof Translations | string, fallback?: string): string => {
       const translation =
         (translations as Translations)[key as keyof Translations]?.[language];
-      return translation || fallback || key;
+      return String(translation || fallback || key);
     },
     [language]
   );

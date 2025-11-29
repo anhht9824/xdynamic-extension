@@ -54,19 +54,19 @@ const FilterGrid: React.FC<FilterGridProps> = ({
     },
     {
       key: "violence" as const,
-      label: t("filter.violence", "Bạo lực"),
+      label: t("filter.violence", "Máu me"),
       enabled: filters.violence && isEnabled,
       disabled: isFreePlan,
     },
     {
       key: "toxicity" as const,
-      label: t("filter.toxicity", "Tiêu cực"),
+      label: t("filter.toxicity", "Vũ khí"),
       enabled: filters.toxicity && isEnabled,
       disabled: isFreePlan,
     },
     {
       key: "vice" as const,
-      label: t("filter.vice", "Chất kích thích"),
+      label: t("filter.vice", "Chiến tranh"),
       enabled: filters.vice && isEnabled,
       disabled: isFreePlan,
     },

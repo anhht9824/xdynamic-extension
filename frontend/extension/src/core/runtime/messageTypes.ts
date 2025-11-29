@@ -9,6 +9,7 @@ export type RuntimeMessage =
   | { type: "UPDATE_STATE"; payload: ExtensionState }
   | { type: "STATE_UPDATED"; payload: ExtensionState }
   | { type: "ANALYZE_IMAGE"; url: string; context?: DetectionRequest["context"] }
+  | { type: "ANALYZE_IMAGE_DATA"; imageData: string; url: string; context?: DetectionRequest["context"] }
   | {
       type: "STATS_UPDATED";
       data: { total: number; today: number; weekly: number };

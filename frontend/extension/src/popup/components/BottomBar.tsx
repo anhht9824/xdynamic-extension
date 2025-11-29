@@ -1,6 +1,6 @@
 import React, { useState, useRef } from "react";
 import { ChevronDown } from "lucide-react";
-import { InfoIcon } from "../../components/icons/InfoIcon";
+import InfoIcon from "../../components/icons/InfoIcon";
 import { useLanguageContext } from "../../providers/LanguageProvider";
 import { useClickOutside } from "../../hooks";
 
