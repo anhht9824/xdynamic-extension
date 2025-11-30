@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { DashboardLayout } from '../components/DashboardLayout';
 import { 
   Settings as SettingsIcon, 
@@ -9,12 +9,13 @@ import {
   RotateCcw,
   Download,
   Calendar,
-  CheckCircle
+  CheckCircle,
+  Loader2
 } from 'lucide-react';
 
 type TabType = 'general' | 'ai-model' | 'notifications' | 'security';
 
-import { adminService, SystemSettingItem } from '../services/admin.service';
+import { adminService, SystemSettingItem, ApiError } from '../services/admin.service';
 import { useToast } from '../hooks/useToast';
 import { ToastContainer } from '../components/ui/Toast';
 
@@ -22,6 +23,7 @@ export const SystemSettings: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('general');
 
   const [isLoading, setIsLoading] = useState(false);
+  const [isFetching, setIsFetching] = useState(true);
   const { toasts, success, error } = useToast();
 
   // Local state for form inputs (initialized from settings)
@@ -32,31 +34,38 @@ export const SystemSettings: React.FC = () => {
   const [slackNotifications, setSlackNotifications] = useState(false);
   const [twoFactorAuth, setTwoFactorAuth] = useState(true);
 
-  React.useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const data = await adminService.getSystemSettings();
-        const settingsMap: Record<string, string> = {};
-        data.forEach(item => {
-          settingsMap[item.key] = item.value;
-        });
+  const fetchSettings = useCallback(async () => {
+    setIsFetching(true);
+    try {
+      const data = await adminService.getSystemSettings();
+      const settingsMap: Record<string, string> = {};
+      data.forEach(item => {
+        settingsMap[item.key] = item.value;
+      });
 
-        
-        // Initialize local state
-        if (settingsMap['auto_moderate']) setAutoModerate(settingsMap['auto_moderate'] === 'true');
-        if (settingsMap['api_key']) setApiKey(settingsMap['api_key']);
-        if (settingsMap['threshold']) setThreshold(Number(settingsMap['threshold']));
-        if (settingsMap['email_notifications']) setEmailNotifications(settingsMap['email_notifications'] === 'true');
-        if (settingsMap['slack_notifications']) setSlackNotifications(settingsMap['slack_notifications'] === 'true');
-        if (settingsMap['two_factor_auth']) setTwoFactorAuth(settingsMap['two_factor_auth'] === 'true');
-        
-      } catch (err) {
-        console.error('Failed to fetch settings', err);
+      // Initialize local state
+      if (settingsMap['auto_moderate']) setAutoModerate(settingsMap['auto_moderate'] === 'true');
+      if (settingsMap['api_key']) setApiKey(settingsMap['api_key']);
+      if (settingsMap['threshold']) setThreshold(Number(settingsMap['threshold']));
+      if (settingsMap['email_notifications']) setEmailNotifications(settingsMap['email_notifications'] === 'true');
+      if (settingsMap['slack_notifications']) setSlackNotifications(settingsMap['slack_notifications'] === 'true');
+      if (settingsMap['two_factor_auth']) setTwoFactorAuth(settingsMap['two_factor_auth'] === 'true');
+      
+    } catch (err) {
+      console.error('Failed to fetch settings', err);
+      if (err instanceof ApiError) {
+        error(err.message);
+      } else {
         error('Failed to load settings');
       }
-    };
+    } finally {
+      setIsFetching(false);
+    }
+  }, [error]);
+
+  useEffect(() => {
     fetchSettings();
-  }, []);
+  }, [fetchSettings]);
 
   const handleSave = async () => {
     setIsLoading(true);
@@ -73,7 +82,11 @@ export const SystemSettings: React.FC = () => {
       await adminService.updateSystemSettings(updatedSettings);
       success('Settings saved successfully');
     } catch (err) {
-      error('Failed to save settings');
+      if (err instanceof ApiError) {
+        error(err.message);
+      } else {
+        error('Failed to save settings');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -96,6 +109,14 @@ export const SystemSettings: React.FC = () => {
             <h1 className="text-2xl font-bold text-gray-900">System Settings</h1>
             <p className="text-sm text-gray-500 mt-1">Configure your XDynamic system preferences</p>
           </div>
+          <button
+            onClick={handleSave}
+            disabled={isLoading || isFetching}
+            className="btn btn-primary flex items-center space-x-2 disabled:opacity-50"
+          >
+            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            <span>Save Changes</span>
+          </button>
         </div>
 
         {/* Status Cards */}

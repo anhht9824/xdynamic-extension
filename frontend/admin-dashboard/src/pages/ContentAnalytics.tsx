@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { DashboardLayout } from '../components/DashboardLayout';
 import { 
   FileText, 
@@ -27,6 +27,10 @@ import {
   ResponsiveContainer,
   Cell 
 } from 'recharts';
+
+import { adminService, OverviewStats, ApiError } from '../services/admin.service';
+import { useToast } from '../hooks/useToast';
+import { ToastContainer } from '../components/ui/Toast';
 
 
 
@@ -61,29 +65,30 @@ const topContent: ContentItem[] = [
   { id: '5', preview: 'Feature_Demo.mp4', type: 'Video', views: 5432, flags: 0, date: '2024-10-05' },
 ];
 
-import { adminService, OverviewStats } from '../services/admin.service';
-import { useToast } from '../hooks/useToast';
-import { ToastContainer } from '../components/ui/Toast';
-
 export const ContentAnalytics: React.FC = () => {
   const [stats, setStats] = useState<OverviewStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { toasts, error } = useToast();
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const data = await adminService.getOverviewStats();
-        setStats(data);
-      } catch (err) {
-        console.error('Failed to fetch stats', err);
+  const fetchStats = useCallback(async () => {
+    try {
+      const data = await adminService.getOverviewStats();
+      setStats(data);
+    } catch (err) {
+      console.error('Failed to fetch stats', err);
+      if (err instanceof ApiError) {
+        error(err.message);
+      } else {
         error('Failed to load analytics data');
-      } finally {
-        setIsLoading(false);
       }
-    };
+    } finally {
+      setIsLoading(false);
+    }
+  }, [error]);
+
+  useEffect(() => {
     fetchStats();
-  }, []);
+  }, [fetchStats]);
 
   const getTypeIcon = (type: string) => {
     switch (type) {

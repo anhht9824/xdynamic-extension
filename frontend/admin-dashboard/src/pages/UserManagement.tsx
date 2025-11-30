@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { DashboardLayout } from '../components/DashboardLayout';
 import { 
   ChevronDown, 
@@ -12,7 +12,8 @@ import {
   ChevronRight,
   Users as UsersIcon,
   X,
-  Check
+  Check,
+  Trash2
 } from 'lucide-react';
 import { useDebounce } from '../hooks/useDebounce';
 import { useToast } from '../hooks/useToast';
@@ -21,7 +22,7 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { TableSkeleton } from '../components/ui/SkeletonLoader';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 
-import { adminService, User } from '../services/admin.service';
+import { adminService, User, downloadBlob, ApiError } from '../services/admin.service';
 
 export const UserManagement: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -37,7 +38,7 @@ export const UserManagement: React.FC = () => {
   const debouncedSearch = useDebounce(searchQuery, 500);
   const { toasts, success, error } = useToast();
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     setIsLoading(true);
     try {
       const response = await adminService.getUsers(
@@ -50,16 +51,20 @@ export const UserManagement: React.FC = () => {
       setUsers(response.users);
       setTotalUsers(response.total);
     } catch (err) {
-      error('Failed to fetch users');
+      if (err instanceof ApiError) {
+        error(err.message);
+      } else {
+        error('Failed to fetch users');
+      }
       console.error(err);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [currentPage, debouncedSearch, statusFilter, roleFilter, error]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     fetchUsers();
-  }, [currentPage, debouncedSearch, statusFilter, roleFilter]);
+  }, [fetchUsers]);
 
   // Pagination
   const totalPages = Math.ceil(totalUsers / itemsPerPage);
@@ -94,7 +99,11 @@ export const UserManagement: React.FC = () => {
         fetchUsers();
         setSelectedUsers(new Set());
     } catch (err) {
-        error('Failed to perform bulk action');
+        if (err instanceof ApiError) {
+            error(err.message);
+        } else {
+            error('Failed to perform bulk action');
+        }
     } finally {
         setIsLoading(false);
     }
@@ -106,16 +115,45 @@ export const UserManagement: React.FC = () => {
           success(`User ${!currentStatus ? 'activated' : 'banned'} successfully`);
           fetchUsers();
       } catch (err) {
-          error('Failed to update user status');
+          if (err instanceof ApiError) {
+              error(err.message);
+          } else {
+              error('Failed to update user status');
+          }
       }
   };
 
-  const handleExport = () => {
-    success('Exporting users to CSV...');
-    // Simulate export
-    setTimeout(() => {
+  const handleDeleteUser = async (userId: number, userName: string) => {
+    if (!confirm(`Are you sure you want to delete user "${userName}"? This action cannot be undone.`)) {
+      return;
+    }
+    
+    try {
+      await adminService.deleteUser(userId);
+      success('User deleted successfully');
+      fetchUsers();
+    } catch (err) {
+      if (err instanceof ApiError) {
+        error(err.message);
+      } else {
+        error('Failed to delete user');
+      }
+    }
+  };
+
+  const handleExport = async () => {
+    try {
+      success('Exporting users to CSV...');
+      const blob = await adminService.exportUsers('csv');
+      downloadBlob(blob, `users_export_${new Date().toISOString().split('T')[0]}.csv`);
       success('Export completed successfully!');
-    }, 1500);
+    } catch (err) {
+      if (err instanceof ApiError) {
+        error(err.message);
+      } else {
+        error('Failed to export users');
+      }
+    }
   };
 
   const clearFilters = () => {
@@ -379,6 +417,13 @@ export const UserManagement: React.FC = () => {
                             onClick={() => handleStatusChange(user.id, user.is_active)}
                           >
                             {user.is_active ? <Ban className="w-4 h-4" /> : <Check className="w-4 h-4" />}
+                          </button>
+                          <button 
+                            className="p-2 text-red-600 hover:bg-red-50 rounded transition-colors"
+                            title="Delete user"
+                            onClick={() => handleDeleteUser(user.id, user.full_name || user.email)}
+                          >
+                            <Trash2 className="w-4 h-4" />
                           </button>
                           <button className="p-2 text-gray-600 hover:bg-gray-100 rounded transition-colors">
                             <MoreVertical className="w-4 h-4" />
