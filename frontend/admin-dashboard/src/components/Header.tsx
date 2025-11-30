@@ -1,15 +1,22 @@
 import React, { useState, useRef } from 'react';
 import { Search, Bell, User, ChevronDown, LogOut, Settings, HelpCircle } from 'lucide-react';
 import { useClickOutside } from '../hooks/useClickOutside';
+import { useAuth } from '../contexts/AuthContext';
 
 export const Header: React.FC = () => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
   const notificationRef = useRef<HTMLDivElement>(null);
+  const { user, logout } = useAuth();
 
   useClickOutside(profileRef, () => setShowProfileMenu(false), showProfileMenu);
   useClickOutside(notificationRef, () => setShowNotifications(false), showNotifications);
+
+  const handleLogout = () => {
+    logout();
+    window.location.href = '/login';
+  };
 
   return (
     <header className="fixed top-0 left-64 right-0 h-16 bg-white border-b border-gray-200 z-10 shadow-sm">
@@ -99,8 +106,8 @@ export const Header: React.FC = () => {
                 <User className="w-5 h-5 text-white" />
               </div>
               <div className="text-left hidden md:block">
-                <p className="text-sm font-medium text-gray-900">Admin User</p>
-                <p className="text-xs text-gray-500">admin@xdynamic.com</p>
+                <p className="text-sm font-medium text-gray-900">{user?.full_name || 'Admin User'}</p>
+                <p className="text-xs text-gray-500">{user?.email || 'admin@xdynamic.com'}</p>
               </div>
               <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${showProfileMenu ? 'rotate-180' : ''}`} />
             </button>
@@ -109,8 +116,8 @@ export const Header: React.FC = () => {
             {showProfileMenu && (
               <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 animate-fade-in">
                 <div className="px-4 py-3 border-b border-gray-200">
-                  <p className="text-sm font-medium text-gray-900">Admin User</p>
-                  <p className="text-xs text-gray-500 mt-0.5">admin@xdynamic.com</p>
+                  <p className="text-sm font-medium text-gray-900">{user?.full_name || 'Admin User'}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{user?.email || 'admin@xdynamic.com'}</p>
                 </div>
                 <button className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2 transition-colors">
                   <User className="w-4 h-4" />
@@ -121,7 +128,10 @@ export const Header: React.FC = () => {
                   <span>Settings</span>
                 </button>
                 <div className="my-2 border-t border-gray-200"></div>
-                <button className="w-full px-4 py-2 text-left text-sm text-danger hover:bg-red-50 flex items-center space-x-2 transition-colors">
+                <button 
+                  onClick={handleLogout}
+                  className="w-full px-4 py-2 text-left text-sm text-danger hover:bg-red-50 flex items-center space-x-2 transition-colors"
+                >
                   <LogOut className="w-4 h-4" />
                   <span>Logout</span>
                 </button>
