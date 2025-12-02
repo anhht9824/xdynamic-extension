@@ -43,7 +43,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     try {
       // Verify token by fetching user profile or admin stats
-      const response = await fetch(`${API_URL}/admin/stats/overview`, {
+      const response = await fetch(`${API_URL}/api/user/profile`, {
         headers: {
           'Authorization': `Bearer ${storedToken}`,
           'Content-Type': 'application/json',
@@ -72,7 +72,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const login = useCallback(async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      const response = await fetch(`${API_URL}/auth/login`, {
+      // Step 1: Login to get token
+      const loginResponse = await fetch(`${API_URL}/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -80,22 +81,50 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         body: JSON.stringify({ email, password }),
       });
 
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
+      if (!loginResponse.ok) {
+        const error = await loginResponse.json().catch(() => ({}));
         throw new Error(error.detail || 'Login failed');
       }
 
-      const data = await response.json();
+      const tokenData = await loginResponse.json();
+      const accessToken = tokenData.access_token;
+
+      // Step 2: Get user profile to check admin status
+      const profileResponse = await fetch(`${API_URL}/api/user/profile`, {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!profileResponse.ok) {
+        throw new Error('Failed to get user profile');
+      }
+
+      const profileData = await profileResponse.json();
+      // Backend returns { success: true, data: {...} }
+      const userData = profileData.data || profileData;
       
-      // Check if user is admin
-      if (!data.user?.is_admin) {
+      // Check if user is admin (backend returns isAdmin in camelCase)
+      if (!userData.isAdmin) {
         throw new Error('Admin privileges required');
       }
 
-      setToken(data.access_token);
-      setUser(data.user);
-      localStorage.setItem('admin_token', data.access_token);
-      localStorage.setItem('admin_user', JSON.stringify(data.user));
+      // Normalize user data for frontend
+      const normalizedUser = {
+        id: userData.id,
+        email: userData.email,
+        full_name: userData.fullName || userData.full_name,
+        is_admin: userData.isAdmin,
+        avatar: userData.avatar,
+        plan: userData.plan,
+        credits: userData.credits,
+      };
+
+      setToken(accessToken);
+      setUser(normalizedUser);
+      localStorage.setItem('admin_token', accessToken);
+      localStorage.setItem('admin_user', JSON.stringify(normalizedUser));
     } catch (error) {
       throw error;
     } finally {
