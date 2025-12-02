@@ -1,19 +1,9 @@
 import React from "react";
 import { Button } from "../../components/ui";
+import { PaymentResult } from "../../services/payment.service";
 
 interface PaymentConfirmationScreenProps {
-  paymentData: {
-    transactionId: string;
-    method: string;
-    amount: number;
-    currency: string;
-    timestamp: string;
-    bill: {
-      id: string;
-      description: string;
-      plan: string;
-    };
-  };
+  paymentData: PaymentResult;
   onBackToDashboard: () => void;
   onDownloadReceipt: () => void;
   onShareReceipt: () => void;
@@ -25,140 +15,148 @@ const PaymentConfirmationScreen: React.FC<PaymentConfirmationScreenProps> = ({
   onDownloadReceipt,
   onShareReceipt,
 }) => {
-  const formatCurrency = (amount: number, currency: string) => {
-    return new Intl.NumberFormat("vi-VN").format(amount) + currency;
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("vi-VN").format(amount) + " VND";
   };
 
   const formatDateTime = (timestamp: string) => {
     return new Date(timestamp).toLocaleString("vi-VN");
   };
 
-  const getMethodText = (method: string) => {
-    switch (method) {
-      case "credit-card":
-        return "Thẻ tín dụng/ghi nợ";
-      case "bank-transfer":
-        return "Chuyển khoản ngân hàng";
-      case "e-wallet":
-        return "Ví điện tử";
-      default:
-        return method;
-    }
-  };
+  const isSuccess = paymentData.status === "success";
+  const friendlyFailure = !isSuccess && paymentData.failureReason ? mapFailureReasonText(paymentData.failureReason) : null;
+  const friendlyMessage =
+    paymentData.message ||
+    (isSuccess ? "Giao dich cua ban da duoc xu ly thanh cong." : friendlyFailure || "Thanh toan that bai. Vui long thu lai.");
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      {/* Success Modal */}
-      <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-8 text-center">
-        {/* Success Icon */}
-        <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-6">
-          <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-          </svg>
-        </div>
-
-        {/* Success Message */}
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">
-          Thanh toán thành công!
-        </h2>
-        <p className="text-gray-600 mb-8">
-          Hóa đơn của bạn đã được thanh toán thành công. Dịch vụ sẽ được kích hoạt trong vài phút.
-        </p>
-
-        {/* Payment Details */}
-        <div className="bg-gray-50 rounded-lg p-6 mb-6 text-left">
-          <h3 className="font-semibold text-gray-900 mb-4">Chi tiết thanh toán</h3>
-          
-          <div className="space-y-3 text-sm">
-            <div className="flex justify-between">
-              <span className="text-gray-600">Mã giao dịch:</span>
-              <span className="font-mono font-medium">{paymentData.transactionId}</span>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+      <div className="relative w-full max-w-lg rounded-3xl overflow-hidden bg-slate-900 text-white shadow-2xl border border-slate-800">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_10%_20%,rgba(59,130,246,0.15),transparent_35%),radial-gradient(circle_at_90%_10%,rgba(34,197,94,0.12),transparent_30%),radial-gradient(circle_at_50%_100%,rgba(239,68,68,0.12),transparent_30%)]" />
+        <div className="relative p-8 space-y-6">
+          <div className="flex items-start space-x-4">
+            <div
+              className={`w-14 h-14 rounded-2xl flex items-center justify-center ${
+                isSuccess ? "bg-emerald-500/20 text-emerald-300" : "bg-rose-500/20 text-rose-300"
+              } border border-white/10 shadow-inner`}
+            >
+              {isSuccess ? (
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              ) : (
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              )}
             </div>
-            
-            <div className="flex justify-between">
-              <span className="text-gray-600">Hóa đơn:</span>
-              <span className="font-medium">{paymentData.bill.description}</span>
-            </div>
-            
-            <div className="flex justify-between">
-              <span className="text-gray-600">Gói dịch vụ:</span>
-              <span className="font-medium">{paymentData.bill.plan}</span>
-            </div>
-            
-            <div className="flex justify-between">
-              <span className="text-gray-600">Phương thức:</span>
-              <span className="font-medium">{getMethodText(paymentData.method)}</span>
-            </div>
-            
-            <div className="flex justify-between">
-              <span className="text-gray-600">Thời gian:</span>
-              <span className="font-medium">{formatDateTime(paymentData.timestamp)}</span>
-            </div>
-            
-            <div className="border-t pt-3">
-              <div className="flex justify-between font-semibold">
-                <span>Tổng cộng:</span>
-                <span className="text-green-600">
-                  {formatCurrency(paymentData.amount, paymentData.currency)}
-                </span>
+            <div className="flex-1 space-y-2">
+              <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-white/10 border border-white/10 text-slate-100">
+                {isSuccess ? "Payment success" : "Payment failed"}
               </div>
+              <h2 className="text-2xl font-bold leading-snug">
+                {isSuccess ? "Thanh toan thanh cong" : "Thanh toan that bai"}
+              </h2>
+              <p className="text-slate-300">{friendlyMessage}</p>
             </div>
           </div>
-        </div>
 
-        {/* Action Buttons */}
-        <div className="space-y-3">
-          <Button
-            onClick={onBackToDashboard}
-            className="w-full bg-blue-500 hover:bg-blue-600 text-white py-3"
-          >
-            Quay lại Dashboard
-          </Button>
-          
           <div className="grid grid-cols-2 gap-3">
-            <Button
-              onClick={onDownloadReceipt}
-              variant="outline"
-              className="py-2 text-sm"
-            >
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              Tải PDF
+            <div className="rounded-2xl bg-white/5 border border-white/10 p-4">
+              <p className="text-xs uppercase tracking-wide text-slate-400">So tien</p>
+              <p className={`text-xl font-semibold ${isSuccess ? "text-emerald-300" : "text-rose-300"}`}>
+                {formatCurrency(paymentData.amount)}
+              </p>
+            </div>
+            <div className="rounded-2xl bg-white/5 border border-white/10 p-4">
+              <p className="text-xs uppercase tracking-wide text-slate-400">Trang thai</p>
+              <p className="text-xl font-semibold">{isSuccess ? "Hoan tat" : "That bai"}</p>
+            </div>
+          </div>
+
+          <div className="rounded-2xl bg-white/5 border border-white/10 p-5 space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold">Chi tiet giao dich</h3>
+              <span className="text-xs font-mono text-slate-400">{paymentData.transactionId}</span>
+            </div>
+            <div className="space-y-3 text-sm text-slate-200">
+              <DetailRow label="Thoi gian" value={formatDateTime(paymentData.timestamp)} />
+              {paymentData.currentPlan && <DetailRow label="Goi hien tai" value={paymentData.currentPlan.toUpperCase()} />}
+              {!isSuccess && (
+                <DetailRow label="Ly do that bai" value={friendlyFailure || "Khong ro ly do"} valueClass="text-rose-300" />
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <Button onClick={onBackToDashboard} className="w-full bg-blue-500 hover:bg-blue-600 text-white py-3">
+              Quay lai Dashboard
             </Button>
-            
-            <Button
-              onClick={onShareReceipt}
-              variant="outline"
-              className="py-2 text-sm"
-            >
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
-              </svg>
-              Chia sẻ
-            </Button>
+
+            {isSuccess ? (
+              <div className="grid grid-cols-2 gap-3">
+                <Button onClick={onDownloadReceipt} variant="outline" className="py-2 text-sm">
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Tai PDF
+                </Button>
+
+                <Button onClick={onShareReceipt} variant="outline" className="py-2 text-sm">
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"
+                    />
+                  </svg>
+                  Chia se
+                </Button>
+              </div>
+            ) : (
+              <Button onClick={onBackToDashboard} variant="outline" className="w-full border-slate-700 text-slate-200 hover:bg-slate-800">
+                Thu lai sau
+              </Button>
+            )}
+          </div>
+
+          <div className="rounded-2xl bg-white/5 border border-white/10 p-4">
+            <p className="text-sm text-slate-300">
+              <span className="font-semibold text-white">Can ho tro?</span> Hotline <span className="font-mono">1900-1234</span> - Email{" "}
+              <span className="font-mono">support@xdynamic.com</span>
+            </p>
           </div>
         </div>
-
-        {/* Support Notice */}
-        <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-          <p className="text-sm text-blue-800">
-            <strong>Cần hỗ trợ?</strong><br />
-            Liên hệ hotline: <span className="font-mono">1900-1234</span><br />
-            hoặc email: <span className="font-mono">support@xdynamic.com</span>
-          </p>
-        </div>
-
-        {/* Email Confirmation Notice */}
-        <p className="text-xs text-gray-500 mt-4">
-          📧 Email xác nhận đã được gửi đến địa chỉ email của bạn
-        </p>
       </div>
-
-      {/* Background Overlay */}
-      <div className="fixed inset-0 bg-black bg-opacity-50 -z-10"></div>
     </div>
   );
 };
 
 export default PaymentConfirmationScreen;
+
+const DetailRow = ({
+  label,
+  value,
+  valueClass,
+}: {
+  label: string;
+  value: string;
+  valueClass?: string;
+}) => (
+  <div className="flex items-center justify-between">
+    <span className="text-slate-400">{label}</span>
+    <span className={`font-medium ${valueClass || "text-white"}`}>{value}</span>
+  </div>
+);
+
+const mapFailureReasonText = (reason: NonNullable<PaymentResult["failureReason"]>) => {
+  switch (reason) {
+    case "insufficient_balance":
+      return "Khong du so du de thanh toan";
+    case "network_error":
+      return "Khong ket noi duoc may chu";
+    default:
+      return "Thanh toan that bai";
+  }
+};

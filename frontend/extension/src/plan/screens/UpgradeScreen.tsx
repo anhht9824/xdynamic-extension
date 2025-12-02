@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "../../components/ui";
 import { Plan, PlanType } from "../../types/common";
 import { useToast } from "../../hooks/useToast";
+import { subscriptionService } from "../../services/subscription.service";
 
 interface UpgradeScreenProps {
   onSelectPlan: (plan: Plan, promoCode?: string) => void;
@@ -18,6 +19,7 @@ const UpgradeScreen: React.FC<UpgradeScreenProps> = ({
   const [discount, setDiscount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [useTrialPeriod, setUseTrialPeriod] = useState(false);
+  const [currentPlan, setCurrentPlan] = useState<PlanType | null>(null);
   const { error: showErrorToast, success: showSuccessToast } = useToast();
 
   // Available plans
@@ -84,6 +86,23 @@ const UpgradeScreen: React.FC<UpgradeScreenProps> = ({
     },
   ];
 
+  // Load current subscription to show active plan
+  useEffect(() => {
+    const loadCurrentPlan = async () => {
+      try {
+        const sub = await subscriptionService.getCurrentSubscription();
+        if (sub?.plan) {
+          setCurrentPlan(sub.plan);
+          setSelectedPlan(sub.plan);
+        }
+      } catch (error) {
+        showErrorToast("Khong tai duoc goi hien tai");
+      }
+    };
+
+    void loadCurrentPlan();
+  }, [showErrorToast]);
+
   const handleApplyPromo = () => {
     setIsLoading(true);
     // Simulate API call to validate promo code
@@ -147,6 +166,10 @@ const UpgradeScreen: React.FC<UpgradeScreenProps> = ({
   const handleSubscribe = () => {
     const plan = plans.find((p) => p.type === selectedPlan);
     if (plan) {
+      if (currentPlan && selectedPlan === currentPlan) {
+        showErrorToast("Ban dang o goi nay", "Vui long chon goi khac de nang cap");
+        return;
+      }
       onSelectPlan(plan, promoApplied ? promoCode : undefined);
     }
   };
@@ -179,6 +202,16 @@ const UpgradeScreen: React.FC<UpgradeScreenProps> = ({
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {currentPlan && (
+          <div className="mb-6 flex items-center justify-between rounded-xl border border-blue-100 bg-blue-50 px-4 py-3">
+            <div className="flex items-center space-x-3">
+              <span className="h-2.5 w-2.5 rounded-full bg-blue-500" />
+              <span className="text-sm font-semibold text-blue-800">Goi hien tai: {currentPlan.toUpperCase()}</span>
+            </div>
+            <span className="text-xs text-blue-700">Chon goi khac de doi hoac nang cap</span>
+          </div>
+        )}
+
         {/* Plans Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           {plans.map((plan) => {
@@ -268,11 +301,16 @@ const UpgradeScreen: React.FC<UpgradeScreenProps> = ({
                       e.stopPropagation();
                       setSelectedPlan(plan.type);
                     }}
+                    disabled={plan.type === currentPlan}
                     className={`w-full py-3 text-white font-semibold transition-colors ${
-                      isSelected ? colors.button : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                      plan.type === currentPlan
+                        ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                        : isSelected
+                          ? colors.button
+                          : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                     }`}
                   >
-                    {isSelected ? "Đã chọn" : "Chọn gói này"}
+                    {plan.type === currentPlan ? "Bạn đã ở plan này" : isSelected ? "Đã chọn" : "Chọn gói này"}
                   </Button>
                 </div>
               </div>

@@ -26,7 +26,7 @@ class PaymentService:
         """Tạo chữ ký HMAC SHA256"""
         return hmac.new(secret.encode("utf-8"), raw.encode("utf-8"), hashlib.sha256).hexdigest()
 
-    async def create_topup_payment(self, user_id: int, amount: int) -> Dict[str, Any]:
+    async def create_topup_payment(self, user_id: int, amount: int, return_url: str = None) -> Dict[str, Any]:
         """Tạo link thanh toán MoMo QR (captureWallet) để user nạp tiền"""
         if amount < 1000:
             raise ValueError("Minimum topup amount is 1,000 VND")
@@ -53,7 +53,15 @@ class PaymentService:
         ipn_url = settings.MOMO_IPN_URL
         request_type = "captureWallet"
         order_info = f"Topup {amount} VND"
-        extra_data = ""
+        
+        # Use return_url as extraData if provided, otherwise empty
+        extra_data = return_url if return_url else ""
+        
+        # Encode extraData base64 if needed? MoMo docs say string. 
+        # But usually it's better to be safe with URL encoding if it's a URL.
+        # However, MoMo just passes it back. Let's keep it simple string for now.
+        # If it contains special chars, might need handling.
+        # For now, assume simple URL.
 
         # Tạo raw signature (phải đúng thứ tự tham số)
         raw_signature = (

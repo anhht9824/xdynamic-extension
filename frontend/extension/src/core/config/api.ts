@@ -64,14 +64,14 @@ export const API_ENDPOINTS = {
     METHODS: '/api/payment/methods',
     PROCESS: '/api/payment/process',
     HISTORY: '/api/payment/history',
+    TOPUP: '/api/payment/topup',
   },
 
-  // Plan endpoints
-  PLAN: {
-    LIST: '/api/plans',
-    CURRENT: '/api/plans/current',
-    UPGRADE: '/api/plans/upgrade',
-    CANCEL: '/api/plans/cancel',
+  // Subscription endpoints
+  SUBSCRIPTION: {
+    CURRENT: '/api/subscription/current',
+    PURCHASE: '/api/subscription/purchase',
+    CANCEL: '/api/subscription/cancel',
   },
 } as const;
 

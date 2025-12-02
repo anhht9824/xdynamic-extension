@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "../../components/ui";
 
-import { paymentService, Bill } from "../../services/payment.service";
+// Bill type no longer exists - topup flow doesn't use bills
+// import { paymentService, Bill } from "../../services/payment.service";
 import { logger } from "../../utils";
 
 interface BillOverviewScreenProps {

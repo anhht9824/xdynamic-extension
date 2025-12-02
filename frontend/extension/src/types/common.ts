@@ -52,6 +52,16 @@ export interface Plan {
   trialDays?: number;
 }
 
+export interface Subscription {
+  id: number;
+  plan: "free" | "plus" | "pro";
+  status: string;
+  monthly_quota: number;
+  used_quota: number;
+  expires_at: string | null;
+  created_at: string;
+}
+
 export interface UserPlan {
   id: string;
   userId: string;
@@ -113,6 +123,7 @@ export interface UserProfile {
   avatar?: string;
   plan: string;
   planType: PlanType;
+  credits?: number;
   isAdmin?: boolean;
 }
 

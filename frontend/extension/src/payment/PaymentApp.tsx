@@ -1,90 +1,84 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { logger, redirectToPage } from "../utils";
-import BillOverviewScreen from "./screens/BillOverviewScreen";
-import PaymentScreen from "./screens/PaymentScreen";
 import PaymentConfirmationScreen from "./screens/PaymentConfirmationScreen";
+import PaymentScreen from "./screens/PaymentScreen";
+import { PaymentResult } from "../services/payment.service";
+import { subscriptionService } from "../services/subscription.service";
 
-import { paymentService, Bill, PaymentData } from "../services/payment.service";
-
-type PaymentStep = "overview" | "payment" | "confirmation";
+type PaymentStep = "payment" | "confirmation";
 
 const PaymentApp: React.FC = () => {
-  const [currentStep, setCurrentStep] = useState<PaymentStep>("overview");
-  const [selectedBill, setSelectedBill] = useState<Bill | null>(null);
-  const [paymentResult, setPaymentResult] = useState<PaymentData | null>(null);
+  const [currentStep, setCurrentStep] = useState<PaymentStep>("payment");
+  const [paymentResult, setPaymentResult] = useState<PaymentResult | null>(null);
+  const [defaultAmount, setDefaultAmount] = useState<number>(50000);
+  const [currentPlan, setCurrentPlan] = useState<"free" | "plus" | "pro" | null>(null);
 
-  // Check URL parameters for direct navigation
-  React.useEffect(() => {
+  useEffect(() => {
     const init = async () => {
       const urlParams = new URLSearchParams(window.location.search);
+      let activePlan: "free" | "plus" | "pro" | null = null;
+
+      try {
+        const subscription = await subscriptionService.getCurrentSubscription();
+        activePlan = subscription.plan;
+        setCurrentPlan(subscription.plan);
+      } catch (error) {
+        logger.warn("Unable to fetch current plan for payment screen", error);
+      }
+
+      const resultCode = urlParams.get("resultCode");
+      const orderId = urlParams.get("orderId");
+      const reasonParam = urlParams.get("reason");
+
+      if (resultCode !== null) {
+        const isSuccess = resultCode === "0";
+        const amount = parseInt(urlParams.get("amount") || "0", 10);
+        const message = urlParams.get("message") || (isSuccess ? "Thanh toan thanh cong" : "Thanh toan that bai");
+        const failureReason = !isSuccess ? mapFailureReason(reasonParam || resultCode || message) : undefined;
+
+        setPaymentResult({
+          transactionId: orderId || `TXN-${Date.now()}`,
+          status: isSuccess ? "success" : "failed",
+          message,
+          timestamp: new Date().toISOString(),
+          amount,
+          failureReason,
+          currentPlan: activePlan || undefined,
+        });
+        setCurrentStep("confirmation");
+        return;
+      }
+
       const mode = urlParams.get("mode");
-      
       if (mode === "upgrade") {
-        try {
-          // Fetch unpaid bills or create a specific upgrade bill context
-          // For now, we'll try to fetch bills and find an unpaid one
-          const bills = await paymentService.getBills();
-          const unpaidBill = bills.find(b => b.status === 'unpaid');
-          
-          if (unpaidBill) {
-            setSelectedBill(unpaidBill);
-            setCurrentStep("payment");
-          }
-        } catch (error) {
-          logger.error("Failed to initialize payment flow:", error);
-        }
+        setDefaultAmount(200000);
       }
     };
-    
-    init();
+
+    void init();
   }, []);
 
-  const handleSelectBill = (bill: Bill) => {
-    setSelectedBill(bill);
-    setCurrentStep("payment");
-  };
-
-  const handlePaymentSuccess = (paymentData: PaymentData) => {
-    setPaymentResult(paymentData);
-    setCurrentStep("confirmation");
-    
-    // Update bill status locally if needed, but the confirmation screen usually handles display
-    if (selectedBill) {
-      // In a real app, we might re-fetch bills or update the local state to reflect the change
-      // selectedBill.status = "paid"; 
-    }
-  };
-
-  const handleBackToOverview = () => {
-    setCurrentStep("overview");
-    setSelectedBill(null);
-  };
-
   const handleBackToDashboard = () => {
-    // Redirect to dashboard
-    redirectToPage('DASHBOARD');
+    redirectToPage("DASHBOARD");
   };
 
   const handleDownloadReceipt = () => {
     if (!paymentResult) return;
 
-    // Generate PDF receipt content
     const receiptContent = `
-      XDynamic - Hóa đơn thanh toán
+      XDynamic - Hoa don thanh toan
       
-      Mã giao dịch: ${paymentResult.transactionId}
-      Ngày thanh toán: ${new Date(paymentResult.timestamp).toLocaleDateString("vi-VN")}
+      Ma giao dich: ${paymentResult.transactionId}
+      Ngay thanh toan: ${new Date(paymentResult.timestamp).toLocaleDateString("vi-VN")}
+      Trang thai: ${paymentResult.status === "success" ? "Thanh cong" : "That bai"}
       
-      Chi tiết:
-      - Hóa đơn: ${paymentResult.bill.description}
-      - Gói dịch vụ: ${paymentResult.bill.plan}
-      - Phương thức: ${paymentResult.method}
-      - Số tiền: ${new Intl.NumberFormat("vi-VN").format(paymentResult.amount)}${paymentResult.currency}
+      Chi tiet:
+      - So tien: ${new Intl.NumberFormat("vi-VN").format(paymentResult.amount)} VND
+      - Noi dung: ${paymentResult.message}
       
-      Cảm ơn bạn đã sử dụng dịch vụ XDynamic!
+      Cam on ban da su dung dich vu XDynamic!
     `;
 
-    // Create and download file
     const blob = new Blob([receiptContent], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -99,54 +93,51 @@ const PaymentApp: React.FC = () => {
   const handleShareReceipt = () => {
     if (!paymentResult) return;
 
-    const shareText = `🎉 Đã thanh toán thành công hóa đơn XDynamic!
+    const shareText = `Thanh toan XDynamic: ${paymentResult.status === "success" ? "Thanh cong" : "That bai"}
     
-📄 ${paymentResult.bill.description}
-💰 ${new Intl.NumberFormat("vi-VN").format(paymentResult.amount)}${paymentResult.currency}
-🆔 Mã GD: ${paymentResult.transactionId}
+So tien: ${new Intl.NumberFormat("vi-VN").format(paymentResult.amount)} VND
+Ma GD: ${paymentResult.transactionId}
+${paymentResult.message}
 
-#XDynamic #ThanhToanThanhCong`;
+#XDynamic`;
 
     if (navigator.share) {
-      navigator.share({
-        title: "Hóa đơn XDynamic",
-        text: shareText,
-      }).catch((error) => logger.error("Failed to share receipt", error));
+      navigator
+        .share({
+          title: "Hoa don XDynamic",
+          text: shareText,
+        })
+        .catch((error) => logger.error("Failed to share receipt", error));
     } else {
-      // Fallback: copy to clipboard
-      navigator.clipboard.writeText(shareText).then(() => {
-        alert("Đã sao chép thông tin hóa đơn vào clipboard!");
-      }).catch(() => {
-        alert("Không thể chia sẻ. Vui lòng thử lại.");
-      });
+      navigator.clipboard
+        .writeText(shareText)
+        .then(() => {
+          alert("Da sao chep thong tin vao clipboard!");
+        })
+        .catch(() => {
+          alert("Khong the chia se. Vui long thu lai.");
+        });
     }
   };
 
-  switch (currentStep) {
-    case "overview":
-      return (
-        <BillOverviewScreen
-          onSelectBill={handleSelectBill}
-          onBack={handleBackToDashboard}
-        />
-      );
+  const handleLocalPaymentResult = (result: PaymentResult) => {
+    setPaymentResult(result);
+    setCurrentStep("confirmation");
+  };
 
+  switch (currentStep) {
     case "payment":
-      if (!selectedBill) {
-        setCurrentStep("overview");
-        return null;
-      }
       return (
         <PaymentScreen
-          bill={selectedBill}
-          onPaymentSuccess={handlePaymentSuccess}
-          onBack={handleBackToOverview}
+          initialAmount={defaultAmount}
+          onBack={handleBackToDashboard}
+          onPaymentResult={handleLocalPaymentResult}
         />
       );
 
     case "confirmation":
       if (!paymentResult) {
-        setCurrentStep("overview");
+        setCurrentStep("payment");
         return null;
       }
       return (
@@ -164,3 +155,23 @@ const PaymentApp: React.FC = () => {
 };
 
 export default PaymentApp;
+
+const mapFailureReason = (reasonLike?: string): PaymentResult["failureReason"] => {
+  if (!reasonLike) return "unknown";
+  const normalized = reasonLike.toLowerCase();
+
+  if (
+    normalized.includes("insufficient") ||
+    normalized.includes("not enough") ||
+    normalized.includes("khong du") ||
+    normalized.includes("het tien")
+  ) {
+    return "insufficient_balance";
+  }
+
+  if (normalized.includes("network") || normalized.includes("timeout") || normalized.includes("server") || normalized.includes("ket noi")) {
+    return "network_error";
+  }
+
+  return "unknown";
+};

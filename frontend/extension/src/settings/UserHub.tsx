@@ -193,6 +193,15 @@ const UserHub: React.FC = () => {
     fetchData();
   }, []);
 
+  const refreshProfile = async () => {
+    try {
+      const profile = await userService.getProfile();
+      setUserProfile(profile);
+    } catch (error) {
+      logger.error("Failed to refresh profile:", error);
+    }
+  };
+
   const handleRefreshStats = async () => {
     try {
       const stats = await userService.getStatistics();
@@ -270,19 +279,8 @@ const UserHub: React.FC = () => {
 
   const handleUpgrade = () => {
     logger.info("User initiating upgrade from settings");
-    console.log("[UPGRADE] Starting upgrade flow...");
-    console.log("[UPGRADE] Target page:", "PLAN");
-    console.log("[UPGRADE] Expected URL:", chrome.runtime.getURL("src/plan/index.html"));
-    
-    // Show upgrade benefits toast before redirecting
-    showToast("Khám phá các tính năng Premium!", "info");
-    
-    // Prefer same-tab navigation for reliability; fallback to new tab.
-    setTimeout(() => {
-      console.log("[UPGRADE] Navigating to PLAN page (current tab)...");
-      navigateToPageInCurrentTab("PLAN");
-      setTimeout(() => navigateToPage("PLAN"), 200);
-    }, 300);
+    setActiveTab("account");
+    showToast("Chọn gói nâng cấp phù hợp với bạn", "info");
   };
 
   const handleOpenAdminDashboard = async () => {
@@ -742,6 +740,8 @@ const UserHub: React.FC = () => {
                   onSavePrivacy={handleSavePrivacy}
                   onDeleteAccount={handleDeleteAccount}
                   privacySettings={privacySettings}
+                  userCredits={userProfile.credits}
+                  onRefreshProfile={refreshProfile}
                 />
               )}
             </>

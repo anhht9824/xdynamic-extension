@@ -107,8 +107,7 @@ class SubscriptionService:
     
     def cancel_subscription(self, user_id: int) -> Subscription:
         """
-        Cancel current subscription - user can still use until expires
-        Will auto-downgrade to FREE when expires_at reached
+        Cancel current subscription and immediately downgrade to FREE plan
         """
         current_subscription = self.subscription_repo.get_active_by_user(user_id)
         
@@ -118,10 +117,18 @@ class SubscriptionService:
         if current_subscription.plan == PlanType.FREE:
             raise ValueError("Cannot cancel FREE plan")
         
-        # Mark as cancelled - user can still use until expires_at
+        # Mark current subscription as cancelled
         self.subscription_repo.update_status(current_subscription.id, SubscriptionStatus.CANCELLED)
         
-        return current_subscription  # Return cancelled subscription
+        # Create new FREE subscription immediately
+        free_subscription = self.subscription_repo.create(
+            user_id=user_id,
+            plan=PlanType.FREE,
+            monthly_quota=self.get_plan_details(PlanType.FREE)["quota"],
+            expires_at=None  # FREE plan never expires
+        )
+        
+        return free_subscription  # Return new FREE subscription
     
     def check_and_renew(self, user_id: int):
         """Check if subscription expired and auto-renew (called periodically)"""

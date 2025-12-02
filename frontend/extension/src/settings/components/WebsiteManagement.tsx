@@ -143,49 +143,67 @@ const URLCard: React.FC<URLCardProps> = React.memo(({
 
       {/* URL List */}
       <div className="space-y-2 max-h-80 overflow-y-auto mb-4">
-        {items.map((item) => (
-          <div
-            key={item.id}
-            className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors group"
-          >
-            <div className="flex items-start flex-1 min-w-0">
-              <div className="flex-shrink-0 mt-1">
-                {type === "whitelist" ? (
-                  <div className="w-5 h-5 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center">
-                    <svg className="w-3 h-3 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                ) : (
-                  <div className="w-5 h-5 rounded-full bg-red-100 dark:bg-red-900 flex items-center justify-center">
-                    <svg className="w-3 h-3 text-red-600 dark:text-red-400" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                      <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                )}
-              </div>
-              <div className="ml-3 flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 dark:text-white break-all">
-                  {item.url}
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {formatTimeAgo(item.addedAt)} • {item.visits} lần truy cập
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={() => onDelete(item.id)}
-              className="ml-2 p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
-              aria-label={`Xóa ${item.url}`}
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+        {items.length === 0 ? (
+          <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-gray-300 bg-[#f9fafb] p-6 text-center dark:border-gray-700 dark:bg-gray-800/60">
+            <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-sm dark:bg-gray-700">
+              <svg className="h-7 w-7 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7a2 2 0 012-2h3.28a1 1 0 01.948.684l.894 2.683A1 1 0 0011 9h6a2 2 0 012 2v5a2 2 0 01-2 2H7a4 4 0 01-4-4V7z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7l3.553 2.13A2 2 0 007.894 9H21" />
               </svg>
+            </div>
+            <p className="text-sm font-semibold text-gray-900 dark:text-white">Danh sách trống</p>
+            <p className="text-xs text-gray-600 dark:text-gray-300">Thêm website để quản lý truy cập</p>
+            <button
+              onClick={() => setIsAdding(true)}
+              className="mt-4 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+            >
+              + Thêm URL mới
             </button>
           </div>
-        ))}
+        ) : (
+          items.map((item) => (
+            <div
+              key={item.id}
+              className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors group"
+            >
+              <div className="flex items-start flex-1 min-w-0">
+                <div className="flex-shrink-0 mt-1">
+                  {type === "whitelist" ? (
+                    <div className="w-5 h-5 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center">
+                      <svg className="w-3 h-3 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                  ) : (
+                    <div className="w-5 h-5 rounded-full bg-red-100 dark:bg-red-900 flex items-center justify-center">
+                      <svg className="w-3 h-3 text-red-600 dark:text-red-400" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                        <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                  )}
+                </div>
+                <div className="ml-3 flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white break-all">
+                    {item.url}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {formatTimeAgo(item.addedAt)} • {item.visits} lần truy cập
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => onDelete(item.id)}
+                className="ml-2 p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
+                aria-label={`Xóa ${item.url}`}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          ))
+        )}
       </div>
-
       {/* Add URL */}
       {!isAdding ? (
         <button

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { logger } from "../../utils";
 import { Button } from "../../components/ui";
 import { UserPlan } from "../../types/common";
-import { planService } from "../../services/plan.service";
+// import { planService } from "../../services/plan.service"; // Replaced by subscriptionService
 
 interface PlansOverviewScreenProps {
   onNavigateToUpgrade: () => void;

@@ -4,6 +4,7 @@ from typing import Optional
 
 class TopupRequest(BaseModel):
     amount: int  # VND, minimum 10000
+    return_url: Optional[str] = None  # URL to redirect back to frontend
 
 
 class TopupResponse(BaseModel):

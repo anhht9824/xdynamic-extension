@@ -1,7 +1,12 @@
-import React, { useState } from "react";
-import { PrivacySettings } from "../../types/common";
+import React, { useState, useEffect } from "react";
+import { Plan, PrivacySettings, Subscription } from "../../types/common";
 import FormInput from "./FormInput";
 import RippleButton from "./RippleButton";
+import UpgradeScreen from "../../plan/screens/UpgradeScreen";
+import { subscriptionService } from "../../services/subscription.service";
+import { logger } from "../../utils";
+import PaymentConfirmationScreen from "../../payment/screens/PaymentConfirmationScreen";
+import { PaymentResult } from "../../services/payment.service";
 
 interface AccountTabProps {
   onNavigateToBilling: () => void;
@@ -9,6 +14,8 @@ interface AccountTabProps {
   onSavePrivacy: (settings: PrivacySettings) => void;
   onDeleteAccount: () => void;
   privacySettings: PrivacySettings;
+  userCredits?: number;
+  onRefreshProfile?: () => void;
 }
 
 const AccountTab: React.FC<AccountTabProps> = ({
@@ -17,9 +24,17 @@ const AccountTab: React.FC<AccountTabProps> = ({
   onSavePrivacy,
   onDeleteAccount,
   privacySettings,
+  userCredits = 0,
+  onRefreshProfile,
 }) => {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [subscription, setSubscription] = useState<Subscription | null>(null);
+  const [isLoadingSubscription, setIsLoadingSubscription] = useState(false);
+  const [showUpgradeScreen, setShowUpgradeScreen] = useState(false);
+  const [isProcessingUpgrade, setIsProcessingUpgrade] = useState(false);
+  const [upgradeResult, setUpgradeResult] = useState<PaymentResult | null>(null);
+  const [showUpgradeResult, setShowUpgradeResult] = useState(false);
   
   const [passwordForm, setPasswordForm] = useState({
     oldPassword: "",
@@ -30,9 +45,88 @@ const AccountTab: React.FC<AccountTabProps> = ({
   const [localPrivacySettings, setLocalPrivacySettings] = useState<PrivacySettings>(privacySettings);
 
   // Update local state when props change
-  React.useEffect(() => {
+  useEffect(() => {
     setLocalPrivacySettings(privacySettings);
   }, [privacySettings]);
+
+  // Fetch subscription on mount
+  useEffect(() => {
+    fetchSubscription();
+  }, []);
+
+  const fetchSubscription = async () => {
+    setIsLoadingSubscription(true);
+    try {
+      const sub = await subscriptionService.getCurrentSubscription();
+      setSubscription(sub);
+    } catch (error) {
+      logger.error("Failed to fetch subscription", error);
+    } finally {
+      setIsLoadingSubscription(false);
+    }
+  };
+
+  const handlePlanSelection = async (plan: Plan, promoCode?: string) => {
+    setIsProcessingUpgrade(true);
+    try {
+      logger.info("User selected plan from upgrade screen", { plan: plan.type, promoCode });
+
+      if (plan.type === "free") {
+        await subscriptionService.cancelSubscription();
+        setUpgradeResult({
+          transactionId: `SUB-${Date.now()}`,
+          status: "success",
+          message: "Đã chuyển về gói FREE",
+          timestamp: new Date().toISOString(),
+          amount: 0,
+          currentPlan: "free",
+        });
+      } else {
+        await subscriptionService.purchasePlan(plan.type);
+        setUpgradeResult({
+          transactionId: `SUB-${Date.now()}`,
+          status: "success",
+          message: `Nâng cấp gói ${plan.nameVi} thành công!`,
+          timestamp: new Date().toISOString(),
+          amount: plan.price || 0,
+          currentPlan: plan.type,
+        });
+      }
+
+      await fetchSubscription();
+      if (onRefreshProfile) onRefreshProfile();
+      setShowUpgradeScreen(false);
+      setShowUpgradeResult(true);
+    } catch (error: any) {
+      logger.error("Failed to update plan", error);
+      setUpgradeResult({
+        transactionId: `SUB-${Date.now()}`,
+        status: "failed",
+        message: error?.message || "Có lỗi khi cập nhật gói dịch vụ",
+        timestamp: new Date().toISOString(),
+        amount: plan.price || 0,
+        failureReason: "unknown",
+        currentPlan: subscription?.plan,
+      });
+      setShowUpgradeResult(true);
+    } finally {
+      setIsProcessingUpgrade(false);
+    }
+  };
+
+  const handleCancel = async () => {
+    try {
+      if (confirm("Bạn có chắc chắn muốn hủy gói đăng ký hiện tại? Bạn sẽ trở về gói FREE.")) {
+        await subscriptionService.cancelSubscription();
+        await fetchSubscription();
+        if (onRefreshProfile) onRefreshProfile();
+        alert("Hủy gói thành công!");
+      }
+    } catch (error: any) {
+      logger.error("Failed to cancel subscription", error);
+      alert(error.message || "Hủy gói thất bại");
+    }
+  };
 
   const [linkedAccounts] = useState([
     { provider: "Google", connected: true, email: "user@gmail.com" },
@@ -111,28 +205,96 @@ const AccountTab: React.FC<AccountTabProps> = ({
   return (
     <div className="max-w-6xl mx-auto px-6 py-8" role="tabpanel" id="tabpanel-account" aria-labelledby="tab-account">
 
-      {/* Billing Management */}
+      {/* Subscription & Billing */}
       <div className={`${surface} p-6 mb-6`}>
         <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
           <svg className="w-6 h-6 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
           </svg>
-          Thanh toán & Đăng ký
+          Gói đăng ký & Thanh toán
         </h2>
-        <p className="text-gray-600 dark:text-gray-400 mb-4">
-          Quản lý phương thức thanh toán và thông tin hóa đơn
-        </p>
-        <RippleButton
-          variant="primary"
-          size="lg"
-          onClick={onNavigateToBilling}
-          className="w-full md:w-auto !bg-gradient-to-r !from-green-500 !to-blue-600 hover:!from-green-600 hover:!to-blue-700 shadow-md hover:shadow-lg"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-          </svg>
-          <span className="font-semibold">Xem chi tiết thanh toán</span>
-        </RippleButton>
+        
+        {isLoadingSubscription ? (
+          <div className="text-center py-4 text-gray-500">Đang tải thông tin gói...</div>
+        ) : subscription ? (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <div>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Gói hiện tại</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white capitalize">
+                  {subscription.plan}
+                </p>
+                <p className="text-sm text-gray-500 mt-1">
+                  Hạn mức: {subscription.used_quota} / {subscription.monthly_quota} ảnh/tháng
+                </p>
+                {subscription.expires_at && (
+                  <p className="text-xs text-gray-400 mt-1">
+                    Hết hạn: {new Date(subscription.expires_at).toLocaleDateString()}
+                  </p>
+                )}
+              </div>
+              <div className="text-right">
+                {subscription.plan === "free" ? (
+                  <button 
+                    onClick={() => setShowUpgradeScreen(true)}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-60"
+                    disabled={isProcessingUpgrade}
+                  >
+                    Chọn gói nâng cấp
+                  </button>
+                ) : (
+                  <div className="space-x-2">
+                    <button 
+                      onClick={() => setShowUpgradeScreen(true)}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-60"
+                      disabled={isProcessingUpgrade}
+                    >
+                      Đổi gói
+                    </button>
+                    <button 
+                      onClick={handleCancel}
+                      className="px-4 py-2 border border-red-500 text-red-500 rounded-lg hover:bg-red-50 transition-colors"
+                    >
+                      Hủy gói
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
+              <div className="flex items-center justify-between p-4 bg-green-50 dark:bg-green-900/20 rounded-lg mb-4">
+                <div className="flex items-center">
+                  <div className="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center mr-4">
+                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Số dư tài khoản</p>
+                    <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                      {new Intl.NumberFormat('vi-VN').format(userCredits)} đ
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <RippleButton
+                variant="primary"
+                size="lg"
+                onClick={onNavigateToBilling}
+                className="w-full md:w-auto !bg-gradient-to-r !from-green-500 !to-blue-600 hover:!from-green-600 hover:!to-blue-700 shadow-md hover:shadow-lg"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+                <span className="font-semibold">Nạp thêm tiền vào ví</span>
+              </RippleButton>
+            </div>
+          </div>
+        ) : (
+          <div className="text-center py-4 text-red-500">Không thể tải thông tin gói</div>
+        )}
       </div>
 
       {/* Password Management */}
@@ -324,6 +486,54 @@ const AccountTab: React.FC<AccountTabProps> = ({
           </div>
         )}
       </div>
+
+      {/* Upgrade Plan Overlay */}
+      {showUpgradeScreen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-start justify-center overflow-y-auto p-4">
+          <div className="relative w-full max-w-6xl">
+            <button
+              onClick={() => setShowUpgradeScreen(false)}
+              className="absolute right-4 top-4 z-10 p-2 rounded-full bg-white/90 text-gray-700 hover:bg-white shadow-lg dark:bg-slate-900 dark:text-white"
+              aria-label="Đóng chọn gói"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <div className="overflow-hidden rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 max-h-[90vh]">
+              <div className="max-h-[90vh] overflow-y-auto">
+                <UpgradeScreen onSelectPlan={handlePlanSelection} onBack={() => setShowUpgradeScreen(false)} />
+              </div>
+            </div>
+            {isProcessingUpgrade && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="bg-black/40 backdrop-blur-sm rounded-2xl w-full h-full flex items-center justify-center">
+                  <div className="flex items-center space-x-3 px-4 py-3 bg-white dark:bg-slate-900 rounded-lg shadow-lg text-gray-800 dark:text-white">
+                    <div className="h-5 w-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                    <span>Đang xử lý nâng cấp...</span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Upgrade Result Modal */}
+      {showUpgradeResult && upgradeResult && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="max-w-lg w-full bg-white rounded-2xl shadow-2xl overflow-hidden">
+            <PaymentConfirmationScreen
+              paymentData={upgradeResult}
+              onBackToDashboard={() => {
+                setShowUpgradeResult(false);
+              }}
+              onDownloadReceipt={() => setShowUpgradeResult(false)}
+              onShareReceipt={() => setShowUpgradeResult(false)}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Password Change Modal */}
       {showPasswordModal && (

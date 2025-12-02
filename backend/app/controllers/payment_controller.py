@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
+from datetime import datetime
 import httpx
 import json
 
@@ -14,7 +15,16 @@ router = APIRouter(prefix="/api/payment", tags=["Payment"])
 settings = get_settings()
 
 
-@router.post("/topup", response_model=TopupResponse)
+def _success_response(data: object) -> dict:
+    """Wrap response in standard API format"""
+    return {
+        "success": True,
+        "data": data,
+        "metadata": {"timestamp": datetime.utcnow().isoformat()},
+    }
+
+
+@router.post("/topup")
 async def create_topup(
     topup_data: TopupRequest,
     db: Session = Depends(get_db),
@@ -24,12 +34,16 @@ async def create_topup(
     payment_service = PaymentService(db)
     
     try:
-        result = await payment_service.create_topup_payment(user_id, topup_data.amount)
-        return TopupResponse(
-            pay_url=result["pay_url"],
-            request_id=result["request_id"],
-            qr_code_url=result.get("qr_code_url")
+        result = await payment_service.create_topup_payment(
+            user_id, 
+            topup_data.amount,
+            topup_data.return_url
         )
+        return _success_response({
+            "pay_url": result["pay_url"],
+            "request_id": result["request_id"],
+            "qr_code_url": result.get("qr_code_url")
+        })
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except httpx.HTTPStatusError as e:
@@ -79,7 +93,8 @@ async def payment_success_redirect(
     resultCode: int,
     amount: int = None,
     transId: int = None,
-    message: str = None
+    message: str = None,
+    extraData: str = None
 ):
     """Redirect URL sau khi user thanh toán trên MoMo → redirect sang FE"""
     # Build frontend redirect URL with all useful params
@@ -95,6 +110,12 @@ async def payment_success_redirect(
     query_str = "&".join([
         f"{k}={v}" for k, v in query.items() if v is not None
     ])
-    fe_url = f"{settings.APP_URL}/payment/success"
+    
+    # Determine redirect URL: use extraData if present (it contains return_url), else default
+    if extraData and extraData.startswith("http"):
+        fe_url = extraData
+    else:
+        fe_url = f"{settings.APP_URL}/payment/success"
+        
     redirect_to = f"{fe_url}?{query_str}" if query_str else fe_url
     return RedirectResponse(url=redirect_to, status_code=302)
