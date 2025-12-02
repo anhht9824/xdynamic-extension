@@ -33,7 +33,6 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({
   onNavigateToUpgrade,
   onNavigateToPlanManagement,
   onNavigateToSettings,
-  onLogout,
 }) => {
   const { user } = useAuth();
   const { blockedCount } = useStats();

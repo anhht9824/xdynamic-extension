@@ -3,8 +3,7 @@ import PlansOverviewScreen from "./screens/PlansOverviewScreen";
 import UpgradeScreen from "./screens/UpgradeScreen";
 import PlanConfirmationScreen from "./screens/PlanConfirmationScreen";
 import { Plan } from "../types/common";
-import { redirectToPage, navigateToPage, logger } from "../utils";
-import { planService } from "../services/plan.service";
+import { redirectToPage, navigateToPage } from "../utils";
 
 type PlanStep = "overview" | "upgrade" | "confirmation";
 

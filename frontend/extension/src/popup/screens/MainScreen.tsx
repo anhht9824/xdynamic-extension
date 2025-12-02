@@ -12,10 +12,8 @@ import { useAuth, useFilterState, useStats } from "../../hooks";
 import { PlanType } from "../../types/common";
 
 interface MainScreenProps {
-  username: string;
   planType?: PlanType;
   isGuestMode?: boolean;
-  onSignOut?: () => void;
   onOpenDashboard?: () => void;
   onOpenLogin?: () => void;
 }
@@ -36,10 +34,8 @@ const derivePlanType = (
 };
 
 const MainScreen: React.FC<MainScreenProps> = ({
-  username,
   planType,
   isGuestMode = false,
-  onSignOut,
   onOpenDashboard,
   onOpenLogin,
 }) => {
@@ -81,7 +77,7 @@ const MainScreen: React.FC<MainScreenProps> = ({
   };
 
   return (
-    <div className="w-80 h-[460px] bg-white border border-gray-200 rounded-3xl shadow-lg flex flex-col px-4 py-3 gap-3">
+    <div className="w-full h-full bg-white border border-gray-200 rounded-[24px] shadow-lg flex flex-col px-4 py-3 gap-3 overflow-hidden">
       <Header onLoginClick={onOpenLogin} onProfileClick={onOpenDashboard} />
 
       <ToggleBar />
@@ -103,9 +99,6 @@ const MainScreen: React.FC<MainScreenProps> = ({
 
       <div className="mt-auto">
         <BottomBar
-          username={isSignedIn ? username : ""}
-          onSignOut={onSignOut}
-          isGuestMode={!isSignedIn}
           onInfoClick={handleInfoClick}
         />
       </div>

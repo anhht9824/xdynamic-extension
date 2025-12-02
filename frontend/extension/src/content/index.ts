@@ -25,7 +25,6 @@ const scanConfig: ScanConfig = {
 };
 
 let isPageBlocked = false;
-let currentBlockedPattern: string | null = null;
 
 const isExtensionContextValid = (): boolean => {
   try {
@@ -231,7 +230,6 @@ const checkAndBlockCurrentPage = async (): Promise<boolean> => {
   const matchedPattern = blacklist.find((pattern) => matchesPattern(hostname, fullUrl, pattern));
   if (matchedPattern) {
     isPageBlocked = true;
-    currentBlockedPattern = matchedPattern;
     applyBlacklistOverlay(matchedPattern);
     logger.warn("Page blocked by blacklist", { hostname, matchedPattern });
     return true;
@@ -428,27 +426,6 @@ const shouldScanImage = (img: HTMLImageElement): boolean => {
   }
   
   return false;
-};
-
-/**
- * Extract high-res image URL from Google Images elements
- */
-const getGoogleImagesUrl = (element: HTMLElement): string | null => {
-  // Try to get the image URL from Google Images specific attributes
-  const img = element.querySelector('img') as HTMLImageElement | null;
-  if (!img) return null;
-  
-  // Check for data-src (lazy loaded)
-  if (img.dataset.src && !img.dataset.src.startsWith('data:')) {
-    return img.dataset.src;
-  }
-  
-  // Check for current src
-  if (img.src && !img.src.startsWith('data:')) {
-    return img.src;
-  }
-  
-  return null;
 };
 
 /**

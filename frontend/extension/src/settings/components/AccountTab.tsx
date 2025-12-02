@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { AccountSettings, PrivacySettings } from "../../types/common";
+import { PrivacySettings } from "../../types/common";
 import FormInput from "./FormInput";
 import RippleButton from "./RippleButton";
 

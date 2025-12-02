@@ -9,7 +9,6 @@ export const ReportsPage: React.FC = () => {
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
-  const [isLoading, setIsLoading] = useState(true);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   
   const [filters, setFilters] = useState({
@@ -20,7 +19,6 @@ export const ReportsPage: React.FC = () => {
   });
 
   const fetchReports = async () => {
-    setIsLoading(true);
     try {
       const response = await adminService.getReports({
         page,
@@ -34,8 +32,6 @@ export const ReportsPage: React.FC = () => {
       setTotal(response.total);
     } catch (error) {
       console.error("Failed to fetch reports", error);
-    } finally {
-      setIsLoading(false);
     }
   };
 

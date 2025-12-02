@@ -7,7 +7,7 @@ import { STORAGE_KEYS } from "../utils";
 import { PlanType } from "../types/common";
 
 const Popup: React.FC = () => {
-  const { isSignedIn, user, signOut } = useAuth();
+  const { isSignedIn, user } = useAuth();
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showRegisterModal, setShowRegisterModal] = useState(false);
   const [isGuestMode, setIsGuestMode] = useState(false);
@@ -42,32 +42,24 @@ const Popup: React.FC = () => {
     window.close();
   };
 
-  const handleSignOut = () => {
-    signOut();
-    chrome.storage.local.remove([STORAGE_KEYS.GUEST_MODE], () => {
-      setIsGuestMode(false);
-    });
-  };
-
-  const effectiveUsername = user?.fullName || "Khách";
   const effectivePlan: PlanType | undefined = (user as any)?.planType;
 
   if (isSignedIn === undefined && !isGuestMode) {
     return (
-      <div className="w-80 h-[460px] flex flex-col bg-gray-50">
-        <LoadingScreen />
+      <div className="w-80 h-[460px]">
+        <div className="relative h-full w-full rounded-[24px] border border-gray-200 bg-white shadow-lg">
+          <LoadingScreen />
+        </div>
       </div>
     );
   }
 
   return (
     <>
-      <div className="w-80 h-[460px] flex flex-col bg-white">
+      <div className="w-80 h-[460px]">
         <MainScreen
-          username={effectiveUsername}
           planType={effectivePlan}
           isGuestMode={!isSignedIn || isGuestMode}
-          onSignOut={handleSignOut}
           onOpenDashboard={handleOpenDashboard}
           onOpenLogin={handleOpenLogin}
         />

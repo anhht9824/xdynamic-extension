@@ -523,8 +523,7 @@ export class DetectionService {
    */
   async analyzeImageWithData(
     imageData: string,
-    url: string,
-    context?: DetectionRequest["context"]
+    url: string
   ): Promise<DetectionResult> {
     try {
       const token = await this.getAuthToken();
@@ -596,7 +595,7 @@ export class DetectionService {
   /**
    * Analyze video (not implemented yet)
    */
-  async analyzeVideo(url: string, context?: any): Promise<DetectionResult> {
+  async analyzeVideo(url: string): Promise<DetectionResult> {
     // TODO: Implement video analysis when backend supports it
     return {
       id: `detection_${Date.now()}`,
@@ -620,7 +619,7 @@ export class DetectionService {
       try {
         const result = request.type === 'image' 
           ? await this.analyzeImage(request.url, request.context)
-          : await this.analyzeVideo(request.url, request.context);
+          : await this.analyzeVideo(request.url);
         
         results.push(result);
       } catch (error) {
@@ -643,6 +642,7 @@ export class DetectionService {
    * Get result (mock - backend doesn't store results)
    */
   async getResult(id: string): Promise<DetectionResult> {
+    void id;
     throw new Error('Get result not supported - backend processes images synchronously');
   }
 }

@@ -1,5 +1,5 @@
 import React from "react";
-import { Check, X, HelpCircle, LucideIcon } from "lucide-react";
+import { Check, X, HelpCircle } from "lucide-react";
 import { cn } from "../../lib/utils";
 
 export type SiteStatus = "protected" | "unknown" | "blocked";

@@ -317,11 +317,6 @@ const UserHub: React.FC = () => {
     }
   };
 
-  const handleViewDetails = () => {
-    // Already in dashboard view, just switch to dashboard tab
-    setActiveTab('dashboard');
-  };
-
   const handleToggleProtection = async (enabled: boolean) => {
     // Optimistic update
     setDashboardMetrics(prev => ({ ...prev, protectionStatus: enabled ? "on" : "off" }));
@@ -520,6 +515,8 @@ const UserHub: React.FC = () => {
   };
 
   const handleChangePassword = (oldPassword: string, newPassword: string) => {
+    void oldPassword;
+    void newPassword;
     logger.info("Password change requested");
     showToast("Mật khẩu đã được thay đổi thành công!", "success");
   };
@@ -559,12 +556,6 @@ const UserHub: React.FC = () => {
     }
   };
 
-  const tabs: { id: UserHubTab; label: string; icon: string; description: string }[] = [
-    { id: "dashboard", label: "Trang chủ", icon: "🏠", description: "Tổng quan và thống kê" },
-    { id: "overview", label: "Bảo mật", icon: "🛡️", description: "Cài đặt bảo vệ" },
-    { id: "account", label: "Tài khoản", icon: "👤", description: "Thông tin cá nhân" },
-    { id: "advanced", label: "Nâng cao", icon: "⚙️", description: "Tùy chỉnh chi tiết" },
-  ];
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex">

@@ -5,15 +5,10 @@ import { useLanguageContext } from "../../providers/LanguageProvider";
 import { useClickOutside } from "../../hooks";
 
 interface BottomBarProps {
-  username: string;
-  onSignOut?: () => void;
-  isGuestMode?: boolean;
   onInfoClick?: () => void;
 }
 
 const BottomBar: React.FC<BottomBarProps> = ({
-  username,
-  isGuestMode = false,
   onInfoClick,
 }) => {
   const { t, language, changeLanguage, availableLanguages } = useLanguageContext();
@@ -85,7 +80,23 @@ const BottomBar: React.FC<BottomBarProps> = ({
                 }`}
               >
                 <span>{lang.name}</span>
-                {language === lang.code && <span className="text-blue-600 text-lg">✓</span>}
+                {language === lang.code && (
+                  <svg 
+                    width="16" 
+                    height="16" 
+                    viewBox="0 0 16 16" 
+                    fill="none"
+                    className="text-blue-600"
+                  >
+                    <path 
+                      d="M13 4L6 11L3 8" 
+                      stroke="currentColor" 
+                      strokeWidth="2.5" 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                )}
               </button>
             ))}
           </div>

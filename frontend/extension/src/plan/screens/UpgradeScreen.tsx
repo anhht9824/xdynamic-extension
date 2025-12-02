@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Button } from "../../components/ui";
 import { Plan, PlanType } from "../../types/common";
 import { useToast } from "../../hooks/useToast";
@@ -17,7 +17,6 @@ const UpgradeScreen: React.FC<UpgradeScreenProps> = ({
   const [promoApplied, setPromoApplied] = useState(false);
   const [discount, setDiscount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
-  const [showTrialToggle, setShowTrialToggle] = useState(true);
   const [useTrialPeriod, setUseTrialPeriod] = useState(false);
   const { error: showErrorToast, success: showSuccessToast } = useToast();
 

@@ -94,6 +94,7 @@ export const useSiteDetection = ({
     if (!chrome?.tabs?.onUpdated) return;
 
     const handleTabUpdate = (tabId: number, changeInfo: any) => {
+      void tabId;
       // Only refresh if URL changed
       if (changeInfo.url) {
         fetchCurrentTab();

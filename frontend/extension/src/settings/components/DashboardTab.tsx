@@ -67,8 +67,6 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
 
   const surface =
     "rounded-2xl border border-slate-200/80 dark:border-slate-800/70 bg-white/90 dark:bg-slate-900/70 shadow-sm backdrop-blur";
-  const softSurface =
-    "rounded-2xl border border-slate-200/60 dark:border-slate-800/60 bg-slate-50/80 dark:bg-slate-900/60 shadow-sm backdrop-blur";
 
   return (
     <div className="space-y-6" role="tabpanel" id="tabpanel-dashboard" aria-labelledby="tab-dashboard">

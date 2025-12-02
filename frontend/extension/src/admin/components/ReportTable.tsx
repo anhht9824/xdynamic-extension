@@ -1,6 +1,5 @@
-import React from 'react';
 import { Report } from '../services/admin.service';
-import { Check, X, Eye, MoreHorizontal } from 'lucide-react';
+import { Check, X, Eye } from 'lucide-react';
 
 interface ReportTableProps {
   reports: Report[];

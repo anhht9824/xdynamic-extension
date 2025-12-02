@@ -9,7 +9,7 @@ from app.services.subscription_service import SubscriptionService
 from app.services.ml_inference_service import MLInferenceService
 from app.repositories.usage_log_repository import UsageLogRepository
 from app.schemas.prediction import PredictionResponse
-from app.middleware.auth_middleware import get_current_user_id
+from app.middleware.auth_middleware import get_current_user_id, get_optional_user_id
 
 router = APIRouter(prefix="/api/v1", tags=["Prediction"])
 

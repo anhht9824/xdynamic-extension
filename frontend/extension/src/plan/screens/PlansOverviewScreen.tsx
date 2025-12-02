@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { logger } from "../../utils";
 import { Button } from "../../components/ui";
-import { Plan, UserPlan } from "../../types/common";
+import { UserPlan } from "../../types/common";
 import { planService } from "../../services/plan.service";
 
 interface PlansOverviewScreenProps {
