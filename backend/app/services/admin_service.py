@@ -270,6 +270,22 @@ class AdminService:
         return {"success": True, "message": "User updated successfully"}
 
     @staticmethod
+    def delete_user(db: Session, user_id: int):
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise ValueError("User not found")
+        
+        # Delete related records first (usage logs, transactions, etc.)
+        db.query(UsageLog).filter(UsageLog.user_id == user_id).delete()
+        db.query(Transaction).filter(Transaction.user_id == user_id).delete()
+        
+        # Delete the user
+        db.delete(user)
+        db.commit()
+        
+        return {"success": True, "message": "User deleted successfully"}
+
+    @staticmethod
     def get_system_settings(db: Session) -> List[SystemSettingItem]:
         settings = db.query(SystemSetting).all()
         return [

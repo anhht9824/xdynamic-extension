@@ -3,9 +3,12 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { AuthGuard } from './components/AuthGuard';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
+import { Dashboard } from './pages/Dashboard';
 import { UserManagement } from './pages/UserManagement';
 import { ContentAnalytics } from './pages/ContentAnalytics';
 import { SystemSettings } from './pages/SystemSettings';
+import { Reports } from './pages/Reports';
+import { AITraining } from './pages/AITraining';
 import { LoginPage } from './pages/LoginPage';
 import './assets/index.css';
 
@@ -23,7 +26,7 @@ const App: React.FC = () => {
               path="/"
               element={
                 <AuthGuard>
-                  <Navigate to="/users" replace />
+                  <Dashboard />
                 </AuthGuard>
               }
             />
@@ -51,9 +54,25 @@ const App: React.FC = () => {
                 </AuthGuard>
               }
             />
+            <Route
+              path="/reports"
+              element={
+                <AuthGuard>
+                  <Reports />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/ai-training"
+              element={
+                <AuthGuard>
+                  <AITraining />
+                </AuthGuard>
+              }
+            />
             
-            {/* Catch all - redirect to login */}
-            <Route path="*" element={<Navigate to="/login" replace />} />
+            {/* Catch all - redirect to dashboard */}
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>
       </AuthProvider>

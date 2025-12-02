@@ -102,6 +102,17 @@ def update_user_status(
 ):
     return AdminService.update_user_status(db, user_id, update_data)
 
+@router.delete("/users/{user_id}")
+def delete_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_admin)
+):
+    # Prevent admin from deleting themselves
+    if current_user.id == user_id:
+        raise HTTPException(status_code=400, detail="Cannot delete your own account")
+    return AdminService.delete_user(db, user_id)
+
 @router.get("/settings", response_model=List[SystemSettingItem])
 def get_system_settings(
     db: Session = Depends(get_db),
