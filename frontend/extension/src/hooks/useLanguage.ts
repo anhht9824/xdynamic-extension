@@ -13,13 +13,30 @@ export const useLanguage = () => {
     return "en";
   }, []);
 
-  const changeLanguage = useCallback((newLanguage: Language) => {
-    logger.debug("Changing language to:", newLanguage);
-    setLanguage(newLanguage);
-    chrome.storage.local.set({ language: newLanguage }, () => {
-      logger.debug("Language saved to storage:", newLanguage);
-    });
+  const applyLanguageToDocument = useCallback((newLanguage: Language) => {
+    document.documentElement.lang = newLanguage;
   }, []);
+
+  const changeLanguage = useCallback(
+    (newLanguage: Language) => {
+      logger.debug("Changing language to:", newLanguage);
+      setLanguage(newLanguage);
+      applyLanguageToDocument(newLanguage);
+      chrome.storage.local.set({ language: newLanguage }, () => {
+        logger.debug("Language saved to storage:", newLanguage);
+      });
+
+      try {
+        chrome.runtime.sendMessage({
+          type: "LANGUAGE_CHANGED",
+          payload: newLanguage,
+        });
+      } catch (error) {
+        logger.warn("Failed to broadcast language change", error);
+      }
+    },
+    [applyLanguageToDocument]
+  );
 
   const toggleLanguage = useCallback(() => {
     const newLanguage = language === "en" ? "vi" : "en";
@@ -40,8 +57,25 @@ export const useLanguage = () => {
       const savedLanguage =
         (result.language as Language) || getBrowserLanguage();
       setLanguage(savedLanguage);
+      applyLanguageToDocument(savedLanguage);
     });
-  }, [getBrowserLanguage]);
+  }, [getBrowserLanguage, applyLanguageToDocument]);
+
+  useEffect(() => {
+    const handleStorageChange = (
+      changes: { [key: string]: chrome.storage.StorageChange },
+      areaName: string
+    ) => {
+      if (areaName !== "local" || !changes.language) return;
+      const nextLanguage =
+        (changes.language.newValue as Language) || getBrowserLanguage();
+      setLanguage(nextLanguage);
+      applyLanguageToDocument(nextLanguage);
+    };
+
+    chrome.storage.onChanged.addListener(handleStorageChange);
+    return () => chrome.storage.onChanged.removeListener(handleStorageChange);
+  }, [applyLanguageToDocument, getBrowserLanguage]);
 
   return {
     language,

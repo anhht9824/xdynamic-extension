@@ -131,10 +131,10 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({
           <div className="space-y-1">
             <p className="text-xs font-semibold uppercase tracking-widest text-blue-700">Dashboard</p>
             <h1 className="text-3xl font-bold text-gray-900">
-              Chao mung, {user?.fullName || "Nguoi dung"}
+              Chào mừng, {user?.fullName || "Người dùng"}
             </h1>
             <p className="text-sm text-gray-600">
-              Theo doi trang thai bao ve va su dung dich vu trong mot man hinh.
+              Theo dõi trạng thái bảo vệ và sử dụng dịch vụ trong một màn hình.
             </p>
           </div>
           <button
@@ -155,20 +155,20 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({
                 d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
               />
             </svg>
-            Lam moi
+            Làm mới
           </button>
         </div>
 
-        {/* Key Metrics */}
+        {/* Chỉ số chính */}
         <section className="space-y-6 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">Key Metrics</h2>
+              <h2 className="text-lg font-semibold text-gray-900">Chỉ số chính</h2>
               <p className="text-sm text-gray-600">
-                Trang thai bao ve & su dung theo thoi gian thuc
+                Trạng thái bảo vệ & sử dụng theo thời gian thực
               </p>
             </div>
-            <div className="text-xs text-gray-500">Tu dong dong bo tu API</div>
+            <div className="text-xs text-gray-500">Tự động đồng bộ từ API</div>
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -176,8 +176,8 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({
             <div className="rounded-xl border border-blue-100 bg-white p-5 shadow-sm">
               <div className="mb-4 flex items-start justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Su dung du lieu</p>
-                  <p className="text-xs text-gray-500">Gioi han goi</p>
+                  <p className="text-sm font-medium text-gray-600">Sử dụng dữ liệu</p>
+                  <p className="text-xs text-gray-500">Giới hạn gói</p>
                 </div>
                 <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
                   <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
@@ -191,7 +191,7 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({
                 </div>
                 <div className="flex items-center justify-between text-sm text-gray-600">
                   <span>
-                    Trong tong {metrics.dataUsage.total} {metrics.dataUsage.unit}
+                    Trong tổng {metrics.dataUsage.total} {metrics.dataUsage.unit}
                   </span>
                   <span className="font-semibold text-blue-700">
                     {getUsagePercentage().toFixed(0)}%
@@ -210,8 +210,8 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({
             <div className="rounded-xl border border-blue-100 bg-white p-5 shadow-sm">
               <div className="mb-4 flex items-start justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Toc do mang</p>
-                  <p className="text-xs text-gray-500">Trung binh & hien tai</p>
+                  <p className="text-sm font-medium text-gray-600">Tốc độ mạng</p>
+                  <p className="text-xs text-gray-500">Trung bình & hiện tại</p>
                 </div>
                 <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-cyan-50 text-cyan-700">
                   <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
@@ -228,7 +228,7 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({
                   {metrics.speed.current} {metrics.speed.unit}
                 </div>
                 <div className="text-sm text-gray-600">
-                  Trung binh:{" "}
+                  Trung bình:{" "}
                   <span className="font-semibold text-gray-800">
                     {metrics.speed.average} {metrics.speed.unit}
                   </span>
@@ -249,8 +249,8 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({
             <div className="rounded-xl border border-blue-100 bg-white p-5 shadow-sm">
               <div className="mb-4 flex items-start justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Ngay thanh toan</p>
-                  <p className="text-xs text-gray-500">Ky hoa don ke tiep</p>
+                  <p className="text-sm font-medium text-gray-600">Ngày thanh toán</p>
+                  <p className="text-xs text-gray-500">Kỳ hoá đơn kế tiếp</p>
                 </div>
                 <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
                   <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
@@ -260,10 +260,10 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({
               </div>
               <div className="space-y-2">
                 <div className="text-2xl font-bold text-gray-900">
-                  {metrics.billDueDate || "Dang dong bo"}
+                  {metrics.billDueDate || "Đang đồng bộ"}
                 </div>
                 <div className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">
-                  Chuan bi thanh toan
+                  Chuẩn bị thanh toán
                 </div>
               </div>
             </div>
@@ -272,8 +272,8 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({
             <div className="rounded-xl border border-blue-100 bg-white p-5 shadow-sm">
               <div className="mb-4 flex items-start justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Bao ve hom nay</p>
-                  <p className="text-xs text-gray-500">Noi dung da chan</p>
+                  <p className="text-sm font-medium text-gray-600">Bảo vệ hôm nay</p>
+                  <p className="text-xs text-gray-500">Nội dung đã chặn</p>
                 </div>
                 <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-cyan-50 text-cyan-700">
                   <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
@@ -287,7 +287,7 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({
               </div>
               <div className="space-y-3">
                 <div className="text-3xl font-bold text-gray-900">{metrics.blockedToday}</div>
-                <div className="text-sm text-gray-600">Noi dung da chan hom nay</div>
+                <div className="text-sm text-gray-600">Nội dung đã chặn hôm nay</div>
                 <div
                   className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold border ${protectionColors.badgeBg}`}
                 >
@@ -299,21 +299,21 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({
           </div>
         </section>
 
-        {/* Quick Actions */}
+        {/* Thao tác nhanh */}
         <section className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">Quick Actions</h2>
+              <h2 className="text-lg font-semibold text-gray-900">Thao tác nhanh</h2>
               <p className="text-sm text-gray-600">
-                Thao tac nhanh cho bao cao, thanh toan, nang cap
+                Thao tác nhanh cho báo cáo, thanh toán, nâng cấp
               </p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
             <ActionCard
-              title="Bao cao loi"
-              description="Gui bao cao su co hoac loi ky thuat"
+              title="Báo cáo lỗi"
+              description="Gửi báo cáo sự cố hoặc lỗi kỹ thuật"
               onClick={onNavigateToReporting}
               icon={
                 <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 20 20">
@@ -327,8 +327,8 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({
             />
 
             <ActionCard
-              title="Thanh toan"
-              description="Quan ly hoa don va lich thanh toan"
+              title="Thanh toán"
+              description="Quản lý hoá đơn và lịch thanh toán"
               onClick={onNavigateToPayment}
               icon={
                 <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 20 20">
@@ -338,8 +338,8 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({
             />
 
             <ActionCard
-              title="Nang cap goi"
-              description="Mo khoa them tinh nang bao ve"
+              title="Nâng cấp gói"
+              description="Mở khoá thêm tính năng bảo vệ"
               onClick={onNavigateToUpgrade}
               icon={
                 <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 20 20">
@@ -354,8 +354,8 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({
 
             {onNavigateToPlanManagement && (
               <ActionCard
-                title="Quan ly goi"
-                description="Xem va thay doi goi dich vu"
+                title="Quản lý gói"
+                description="Xem và thay đổi gói dịch vụ"
                 onClick={onNavigateToPlanManagement}
                 icon={
                   <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 20 20">
@@ -366,8 +366,8 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({
             )}
 
             <ActionCard
-              title="Cai dat"
-              description="Cau hinh tai khoan & bao ve"
+              title="Cài đặt"
+              description="Cấu hình tài khoản & bảo vệ"
               onClick={onNavigateToSettings}
               icon={
                 <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 20 20">

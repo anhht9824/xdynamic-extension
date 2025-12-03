@@ -1,4 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
+import { useLanguageContext } from "../../providers/LanguageProvider";
+import { Language } from "../../types";
 
 export interface SearchResult {
   id: string;
@@ -12,75 +14,172 @@ interface SettingsSearchProps {
   onNavigate: (section: string) => void;
 }
 
-// Mock search data - trong production sẽ search thật trong settings
-const searchData: SearchResult[] = [
-  {
-    id: "protection-toggle",
-    title: "Bảo vệ thời gian thực",
-    description: "Bật/tắt tính năng bảo vệ tự động",
-    section: "dashboard",
-    keywords: ["bảo vệ", "protection", "real-time", "thời gian thực"],
+const searchIndex: Record<Language, SearchResult[]> = {
+  vi: [
+    {
+      id: "protection-toggle",
+      title: "Bảo vệ thời gian thực",
+      description: "Bật/tắt tính năng bảo vệ tự động",
+      section: "dashboard",
+      keywords: ["bảo vệ", "protection", "real-time", "thời gian thực"],
+    },
+    {
+      id: "auto-update",
+      title: "Cập nhật tự động",
+      description: "Tự động cập nhật quy tắc bảo vệ",
+      section: "dashboard",
+      keywords: ["cập nhật", "update", "auto", "tự động"],
+    },
+    {
+      id: "change-password",
+      title: "Đổi mật khẩu",
+      description: "Thay đổi mật khẩu tài khoản",
+      section: "account",
+      keywords: ["mật khẩu", "password", "đổi"],
+    },
+    {
+      id: "privacy-settings",
+      title: "Cài đặt riêng tư",
+      description: "Quản lý quyền riêng tư và chia sẻ dữ liệu",
+      section: "account",
+      keywords: ["riêng tư", "privacy", "dữ liệu"],
+    },
+    {
+      id: "export-data",
+      title: "Xuất dữ liệu",
+      description: "Xuất cài đặt ra file JSON hoặc CSV",
+      section: "advanced",
+      keywords: ["xuất", "export", "dữ liệu", "backup"],
+    },
+    {
+      id: "import-data",
+      title: "Nhập dữ liệu",
+      description: "Nhập cài đặt từ file",
+      section: "advanced",
+      keywords: ["nhập", "import", "dữ liệu", "restore"],
+    },
+    {
+      id: "security-settings",
+      title: "Cài đặt bảo mật",
+      description: "Tuỳ chỉnh các quy tắc bảo mật",
+      section: "overview",
+      keywords: ["bảo mật", "security", "quy tắc"],
+    },
+    {
+      id: "delete-account",
+      title: "Xoá tài khoản",
+      description: "Xoá vĩnh viễn tài khoản của bạn",
+      section: "account",
+      keywords: ["xoá", "delete", "account", "tài khoản"],
+    },
+  ],
+  en: [
+    {
+      id: "protection-toggle",
+      title: "Real-time protection",
+      description: "Enable or disable automatic blocking",
+      section: "dashboard",
+      keywords: ["protection", "real-time", "toggle", "security"],
+    },
+    {
+      id: "auto-update",
+      title: "Auto update",
+      description: "Keep protection rules fresh",
+      section: "dashboard",
+      keywords: ["auto", "update", "rules", "refresh"],
+    },
+    {
+      id: "change-password",
+      title: "Change password",
+      description: "Update your account password",
+      section: "account",
+      keywords: ["password", "change", "security"],
+    },
+    {
+      id: "privacy-settings",
+      title: "Privacy settings",
+      description: "Control privacy and data sharing",
+      section: "account",
+      keywords: ["privacy", "data", "sharing"],
+    },
+    {
+      id: "export-data",
+      title: "Export data",
+      description: "Export settings as JSON or CSV",
+      section: "advanced",
+      keywords: ["export", "backup", "csv", "json"],
+    },
+    {
+      id: "import-data",
+      title: "Import data",
+      description: "Restore settings from a file",
+      section: "advanced",
+      keywords: ["import", "restore", "settings"],
+    },
+    {
+      id: "security-settings",
+      title: "Security settings",
+      description: "Customize security rules",
+      section: "overview",
+      keywords: ["security", "rules", "protection"],
+    },
+    {
+      id: "delete-account",
+      title: "Delete account",
+      description: "Permanently delete your account",
+      section: "account",
+      keywords: ["delete", "account", "remove"],
+    },
+  ],
+};
+
+const copy: Record<Language, {
+  placeholder: string;
+  ariaLabel: string;
+  clear: string;
+  resultsFound: (count: number) => string;
+  noResults: (query: string) => string;
+  badges: Record<string, string>;
+}> = {
+  vi: {
+    placeholder: "Tìm kiếm cài đặt... (Ctrl+K)",
+    ariaLabel: "Tìm kiếm cài đặt",
+    clear: "Xoá tìm kiếm",
+    resultsFound: (count) => `Tìm thấy ${count} kết quả`,
+    noResults: (query) => `Không tìm thấy kết quả cho "${query}"`,
+    badges: {
+      dashboard: "Trang chủ",
+      overview: "Bảo mật",
+      account: "Tài khoản",
+      advanced: "Nâng cao",
+    },
   },
-  {
-    id: "auto-update",
-    title: "Cập nhật tự động",
-    description: "Tự động cập nhật quy tắc bảo vệ",
-    section: "dashboard",
-    keywords: ["cập nhật", "update", "auto", "tự động"],
+  en: {
+    placeholder: "Search settings... (Ctrl+K)",
+    ariaLabel: "Search settings",
+    clear: "Clear search",
+    resultsFound: (count) => `${count} results found`,
+    noResults: (query) => `No results for "${query}"`,
+    badges: {
+      dashboard: "Home",
+      overview: "Security",
+      account: "Account",
+      advanced: "Advanced",
+    },
   },
-  {
-    id: "change-password",
-    title: "Đổi mật khẩu",
-    description: "Thay đổi mật khẩu tài khoản",
-    section: "account",
-    keywords: ["mật khẩu", "password", "change", "đổi"],
-  },
-  {
-    id: "privacy-settings",
-    title: "Cài đặt riêng tư",
-    description: "Quản lý quyền riêng tư và chia sẻ dữ liệu",
-    section: "account",
-    keywords: ["riêng tư", "privacy", "data", "dữ liệu"],
-  },
-  {
-    id: "export-data",
-    title: "Xuất dữ liệu",
-    description: "Xuất cài đặt ra file JSON hoặc CSV",
-    section: "advanced",
-    keywords: ["xuất", "export", "data", "dữ liệu", "backup"],
-  },
-  {
-    id: "import-data",
-    title: "Nhập dữ liệu",
-    description: "Nhập cài đặt từ file",
-    section: "advanced",
-    keywords: ["nhập", "import", "data", "dữ liệu", "restore"],
-  },
-  {
-    id: "security-settings",
-    title: "Cài đặt bảo mật",
-    description: "Tùy chỉnh các quy tắc bảo mật",
-    section: "overview",
-    keywords: ["bảo mật", "security", "rules", "quy tắc"],
-  },
-  {
-    id: "delete-account",
-    title: "Xóa tài khoản",
-    description: "Xóa vĩnh viễn tài khoản của bạn",
-    section: "account",
-    keywords: ["xóa", "delete", "account", "tài khoản"],
-  },
-];
+};
 
 const SettingsSearch: React.FC<SettingsSearchProps> = ({ onNavigate }) => {
+  const { language } = useLanguageContext();
+  const text = copy[language];
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const dataSource = searchIndex[language];
 
-  // Search logic
   useEffect(() => {
     if (query.trim().length < 2) {
       setResults([]);
@@ -89,7 +188,7 @@ const SettingsSearch: React.FC<SettingsSearchProps> = ({ onNavigate }) => {
     }
 
     const searchTerms = query.toLowerCase().split(" ");
-    const filtered = searchData.filter((item) => {
+    const filtered = dataSource.filter((item) => {
       const searchText = `${item.title} ${item.description} ${item.keywords.join(" ")}`.toLowerCase();
       return searchTerms.every((term) => searchText.includes(term));
     });
@@ -97,9 +196,8 @@ const SettingsSearch: React.FC<SettingsSearchProps> = ({ onNavigate }) => {
     setResults(filtered);
     setIsOpen(filtered.length > 0);
     setSelectedIndex(-1);
-  }, [query]);
+  }, [query, dataSource]);
 
-  // Click outside to close
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
@@ -111,7 +209,6 @@ const SettingsSearch: React.FC<SettingsSearchProps> = ({ onNavigate }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Keyboard navigation
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (!isOpen || results.length === 0) return;
 
@@ -145,33 +242,32 @@ const SettingsSearch: React.FC<SettingsSearchProps> = ({ onNavigate }) => {
     inputRef.current?.blur();
   };
 
-  const highlightMatch = (text: string, query: string) => {
-    const terms = query.toLowerCase().split(" ").filter(t => t.length > 0);
-    let highlighted = text;
-    
+  const highlightMatch = (textValue: string, searchQuery: string) => {
+    const terms = searchQuery.toLowerCase().split(" ").filter((t) => t.length > 0);
+    let highlighted = textValue;
+
     terms.forEach((term) => {
       const regex = new RegExp(`(${term})`, "gi");
       highlighted = highlighted.replace(regex, "<mark class='bg-yellow-200 dark:bg-yellow-800 text-gray-900 dark:text-white'>$1</mark>");
     });
-    
+
     return highlighted;
   };
 
   const getSectionBadge = (section: string) => {
-    const badges: Record<string, { label: string; color: string }> = {
-      dashboard: { label: "Trang chủ", color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" },
-      overview: { label: "Bảo mật", color: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" },
-      account: { label: "Tài khoản", color: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400" },
-      advanced: { label: "Nâng cao", color: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400" },
+    const label = text.badges[section] || section;
+    const colors: Record<string, string> = {
+      dashboard: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+      overview: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+      account: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
+      advanced: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
     };
-    
-    const badge = badges[section] || { label: section, color: "bg-gray-100 text-gray-700" };
-    return badge;
+
+    return { label, color: colors[section] || "bg-gray-100 text-gray-700" };
   };
 
   return (
     <div ref={searchRef} className="relative w-full max-w-md">
-      {/* Search Input */}
       <div className="relative">
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
           <svg
@@ -195,9 +291,9 @@ const SettingsSearch: React.FC<SettingsSearchProps> = ({ onNavigate }) => {
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
           onFocus={() => query.trim().length >= 2 && results.length > 0 && setIsOpen(true)}
-          placeholder="Tìm kiếm cài đặt... (Ctrl+K)"
+          placeholder={text.placeholder}
           className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow text-sm"
-          aria-label="Tìm kiếm cài đặt"
+          aria-label={text.ariaLabel}
           aria-autocomplete="list"
           aria-controls="search-results"
           aria-expanded={isOpen}
@@ -209,7 +305,7 @@ const SettingsSearch: React.FC<SettingsSearchProps> = ({ onNavigate }) => {
               setIsOpen(false);
             }}
             className="absolute inset-y-0 right-0 pr-3 flex items-center"
-            aria-label="Xóa tìm kiếm"
+            aria-label={text.clear}
           >
             <svg
               className="w-4 h-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
@@ -228,7 +324,6 @@ const SettingsSearch: React.FC<SettingsSearchProps> = ({ onNavigate }) => {
         )}
       </div>
 
-      {/* Search Results Dropdown */}
       {isOpen && results.length > 0 && (
         <div
           id="search-results"
@@ -237,14 +332,14 @@ const SettingsSearch: React.FC<SettingsSearchProps> = ({ onNavigate }) => {
         >
           <div className="p-2 border-b border-gray-200 dark:border-gray-700">
             <p className="text-xs text-gray-500 dark:text-gray-400 px-2">
-              Tìm thấy {results.length} kết quả
+              {text.resultsFound(results.length)}
             </p>
           </div>
           <div className="py-1">
             {results.map((result, index) => {
               const badge = getSectionBadge(result.section);
               const isSelected = index === selectedIndex;
-              
+
               return (
                 <button
                   key={result.id}
@@ -299,7 +394,6 @@ const SettingsSearch: React.FC<SettingsSearchProps> = ({ onNavigate }) => {
         </div>
       )}
 
-      {/* No Results */}
       {isOpen && query.trim().length >= 2 && results.length === 0 && (
         <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-4 z-50">
           <div className="text-center">
@@ -317,7 +411,7 @@ const SettingsSearch: React.FC<SettingsSearchProps> = ({ onNavigate }) => {
               />
             </svg>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Không tìm thấy kết quả cho "<strong>{query}</strong>"
+              {text.noResults(query)}
             </p>
           </div>
         </div>

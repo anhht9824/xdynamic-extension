@@ -1,14 +1,32 @@
 import React, { useEffect, useRef, useState } from "react";
 import { CheckCircle, XCircle, UploadCloud } from "lucide-react";
-
 import { readFromStorage, writeToStorage } from "../../core/storage";
 import { filterService, URLItem } from "../../services/filter.service";
 import { logger, STORAGE_KEYS } from "../../utils";
+import { useLanguageContext } from "../../providers/LanguageProvider";
+import { Language } from "../../types";
 
 type ListType = "whitelist" | "blacklist";
 
 interface WebsiteManagementProps {
   onSave?: () => void;
+}
+
+interface CardCopy {
+  title: string;
+  searchPlaceholder: string;
+  emptyTitle: string;
+  emptyDesc: string;
+  emptyCta: string;
+  addPlaceholder: string;
+  cancel: string;
+  add: string;
+  bulkLabel: string;
+  upload: string;
+  deleteLabel: (url: string) => string;
+  visitsLabel: (count: number) => string;
+  timeAgo: (value: Date | string) => string;
+  uploadAria: (title: string) => string;
 }
 
 interface URLCardProps {
@@ -24,6 +42,7 @@ interface URLCardProps {
   onBulkAdd: (file: File) => void;
   isUploading: boolean;
   type: ListType;
+  copy: CardCopy;
 }
 
 const normalizeUrlInput = (value: string): string | null => {
@@ -65,18 +84,6 @@ const createLocalItem = (url: string): URLItem => ({
   visits: 0,
 });
 
-const formatTimeAgo = (value: Date | string): string => {
-  const date = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(date.getTime())) return "Không rõ thời gian";
-
-  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
-
-  if (seconds < 60) return "Vừa xong";
-  if (seconds < 3600) return `${Math.floor(seconds / 60)} phút trước`;
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)} giờ trước`;
-  return `${Math.floor(seconds / 86400)} ngày trước`;
-};
-
 const toUrlItem = (item: URLItem | any): URLItem => ({
   id: item?.id || item?.url || `url-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
   url: item?.url || "",
@@ -84,204 +91,217 @@ const toUrlItem = (item: URLItem | any): URLItem => ({
   visits: typeof item?.visits === "number" ? item.visits : item?.count || 0,
 });
 
-const URLCard: React.FC<URLCardProps> = React.memo(({
-  items,
-  search,
-  onSearchChange,
-  isAdding,
-  setIsAdding,
-  input,
-  setInput,
-  onAdd,
-  onDelete,
-  onBulkAdd,
-  isUploading,
-  type
-}) => {
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
+const URLCard: React.FC<URLCardProps> = React.memo(
+  ({
+    items,
+    search,
+    onSearchChange,
+    isAdding,
+    setIsAdding,
+    input,
+    setInput,
+    onAdd,
+    onDelete,
+    onBulkAdd,
+    isUploading,
+    type,
+    copy,
+  }) => {
+    const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      onBulkAdd(file);
-      event.target.value = "";
-    }
-  };
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (file) {
+        onBulkAdd(file);
+        event.target.value = "";
+      }
+    };
 
-  const title = type === "whitelist" ? "White List" : "Blacklist";
-  const Icon = type === "whitelist" ? CheckCircle : XCircle;
+    const Icon = type === "whitelist" ? CheckCircle : XCircle;
 
-  return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-          <span className={`rounded-full p-1.5 ${type === "whitelist" ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600"}`} aria-hidden="true">
-            <Icon className="h-5 w-5" />
-          </span>
-          {title} ({items.length})
-        </h3>
-      </div>
-
-      {/* Search */}
-      <div className="mb-4">
-        <div className="relative">
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="Tìm kiếm trong danh sách..."
-            className="w-full px-4 py-2 pl-10 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-          />
-          <svg
-            className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
+    return (
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+            <span
+              className={`rounded-full p-1.5 ${
+                type === "whitelist" ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600"
+              }`}
+              aria-hidden="true"
+            >
+              <Icon className="h-5 w-5" />
+            </span>
+            {copy.title} ({items.length})
+          </h3>
         </div>
-      </div>
 
-      {/* URL List */}
-      <div className="space-y-2 max-h-80 overflow-y-auto mb-4">
-        {items.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-gray-300 bg-[#f9fafb] p-6 text-center dark:border-gray-700 dark:bg-gray-800/60">
-            <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-sm dark:bg-gray-700">
-              <UploadCloud className="h-7 w-7 text-gray-400" aria-hidden="true" />
-            </div>
-            <p className="text-sm font-semibold text-gray-900 dark:text-white">Danh sách trống</p>
-            <p className="text-xs text-gray-600 dark:text-gray-300">Thêm website để quản lý truy cập</p>
-            <button
-              onClick={() => setIsAdding(true)}
-              className="mt-4 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+        {/* Search */}
+        <div className="mb-4">
+          <div className="relative">
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => onSearchChange(e.target.value)}
+              placeholder={copy.searchPlaceholder}
+              className="w-full px-4 py-2 pl-10 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+            />
+            <svg
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
             >
-              + Thêm URL mới
-            </button>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
           </div>
-        ) : (
-          items.map((item) => (
-            <div
-              key={item.id}
-              className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors group"
-            >
-              <div className="flex items-start flex-1 min-w-0">
-                <div className="flex-shrink-0 mt-1">
-                  {type === "whitelist" ? (
-                    <div className="w-5 h-5 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center">
-                      <svg className="w-3 h-3 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                    </div>
-                  ) : (
-                    <div className="w-5 h-5 rounded-full bg-red-100 dark:bg-red-900 flex items-center justify-center">
-                      <svg className="w-3 h-3 text-red-600 dark:text-red-400" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                        <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                      </svg>
-                    </div>
-                  )}
-                </div>
-                <div className="ml-3 flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 dark:text-white break-all">
-                    {item.url}
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {formatTimeAgo(item.addedAt)} • {item.visits} lần truy cập
-                  </p>
-                </div>
+        </div>
+
+        {/* URL List */}
+        <div className="space-y-2 max-h-80 overflow-y-auto mb-4">
+          {items.length === 0 ? (
+            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-gray-300 bg-[#f9fafb] p-6 text-center dark:border-gray-700 dark:bg-gray-800/60">
+              <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-sm dark:bg-gray-700">
+                <UploadCloud className="h-7 w-7 text-gray-400" aria-hidden="true" />
               </div>
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">{copy.emptyTitle}</p>
+              <p className="text-xs text-gray-600 dark:text-gray-300">{copy.emptyDesc}</p>
               <button
-                onClick={() => onDelete(item.id)}
-                className="ml-2 p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
-                aria-label={`Xóa ${item.url}`}
+                onClick={() => setIsAdding(true)}
+                className="mt-4 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                {copy.emptyCta}
               </button>
             </div>
-          ))
+          ) : (
+            items.map((item) => (
+              <div
+                key={item.id}
+                className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors group"
+              >
+                <div className="flex items-start flex-1 min-w-0">
+                  <div className="flex-shrink-0 mt-1">
+                    {type === "whitelist" ? (
+                      <div className="w-5 h-5 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center">
+                        <svg className="w-3 h-3 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                          <path
+                            fillRule="evenodd"
+                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </div>
+                    ) : (
+                      <div className="w-5 h-5 rounded-full bg-red-100 dark:bg-red-900 flex items-center justify-center">
+                        <svg className="w-3 h-3 text-red-600 dark:text-red-400" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                          <path
+                            fillRule="evenodd"
+                            d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+                  <div className="ml-3 flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white break-all">{item.url}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {copy.timeAgo(item.addedAt)} • {copy.visitsLabel(item.visits)}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => onDelete(item.id)}
+                  className="ml-2 p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
+                  aria-label={copy.deleteLabel(item.url)}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Add URL */}
+        {!isAdding ? (
+          <button
+            onClick={() => setIsAdding(true)}
+            className="w-full py-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-400 hover:border-blue-500 hover:text-blue-500 dark:hover:border-blue-400 dark:hover:text-blue-400 transition-colors font-medium"
+          >
+            {copy.emptyCta}
+          </button>
+        ) : (
+          <div className="space-y-2">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && onAdd()}
+              placeholder={copy.addPlaceholder}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+            />
+            <div className="flex space-x-2">
+              <button
+                onClick={() => {
+                  setIsAdding(false);
+                  setInput("");
+                }}
+                className="flex-1 px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors font-medium"
+              >
+                {copy.cancel}
+              </button>
+              <button
+                onClick={onAdd}
+                className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors font-medium"
+              >
+                {copy.add}
+              </button>
+            </div>
+          </div>
         )}
-      </div>
-      {/* Add URL */}
-      {!isAdding ? (
-        <button
-          onClick={() => setIsAdding(true)}
-          className="w-full py-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-400 hover:border-blue-500 hover:text-blue-500 dark:hover:border-blue-400 dark:hover:text-blue-400 transition-colors font-medium"
-        >
-          + Thêm URL mới
-        </button>
-      ) : (
-        <div className="space-y-2">
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && onAdd()}
-            placeholder="https://example.com hoặc *.example.com"
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-          />
-          <div className="flex space-x-2">
+
+        {/* Bulk upload */}
+        <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700 text-xs text-gray-500 dark:text-gray-400 flex items-center justify-between gap-2">
+          <div className="flex items-center space-x-2">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4h16v16H4z" />
+            </svg>
+            <span>{copy.bulkLabel}</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            {isUploading && (
+              <svg className="w-4 h-4 animate-spin text-blue-600" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            )}
             <button
-              onClick={() => {
-                setIsAdding(false);
-                setInput("");
-              }}
-              className="flex-1 px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors font-medium"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
+              className="px-3 py-1 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900 dark:hover:bg-blue-800 text-blue-700 dark:text-blue-300 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Hủy
-            </button>
-            <button
-              onClick={onAdd}
-              className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors font-medium"
-            >
-              Thêm
+              {copy.upload}
             </button>
           </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".txt,.csv,.json"
+            className="hidden"
+            onChange={handleFileChange}
+            aria-label={copy.uploadAria(copy.title)}
+          />
         </div>
-      )}
-
-      {/* Bulk upload */}
-      <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700 text-xs text-gray-500 dark:text-gray-400 flex items-center justify-between gap-2">
-        <div className="flex items-center space-x-2">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4h16v16H4z" />
-          </svg>
-          <span>Nhập nhanh từ file (.txt, .csv, .json)</span>
-        </div>
-        <div className="flex items-center space-x-2">
-          {isUploading && (
-            <svg className="w-4 h-4 animate-spin text-blue-600" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-          )}
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isUploading}
-            className="px-3 py-1 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900 dark:hover:bg-blue-800 text-blue-700 dark:text-blue-300 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Tải file
-          </button>
-        </div>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".txt,.csv,.json"
-          className="hidden"
-          onChange={handleFileChange}
-          aria-label={`Tải file URL cho ${title}`}
-        />
       </div>
-    </div>
-  );
-});
+    );
+  }
+);
 
 const WebsiteManagement: React.FC<WebsiteManagementProps> = ({ onSave }) => {
   const [whitelist, setWhitelist] = useState<URLItem[]>([]);
   const [blacklist, setBlacklist] = useState<URLItem[]>([]);
-
   const [whitelistInput, setWhitelistInput] = useState("");
   const [blacklistInput, setBlacklistInput] = useState("");
   const [whitelistSearch, setWhitelistSearch] = useState("");
@@ -290,6 +310,63 @@ const WebsiteManagement: React.FC<WebsiteManagementProps> = ({ onSave }) => {
   const [isBlacklistAdding, setIsBlacklistAdding] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [uploadingType, setUploadingType] = useState<ListType | null>(null);
+  const { language } = useLanguageContext();
+
+  const tr = (vi: string, en: string) => (language === "vi" ? vi : en);
+
+  const formatTimeAgo = (value: Date | string): string => {
+    const date = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(date.getTime())) return tr("Không rõ thời gian", "Unknown time");
+
+    const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+
+    if (seconds < 60) return tr("Vừa xong", "Just now");
+    if (seconds < 3600) return tr(`${Math.floor(seconds / 60)} phút trước`, `${Math.floor(seconds / 60)} minutes ago`);
+    if (seconds < 86400) return tr(`${Math.floor(seconds / 3600)} giờ trước`, `${Math.floor(seconds / 3600)} hours ago`);
+    return tr(`${Math.floor(seconds / 86400)} ngày trước`, `${Math.floor(seconds / 86400)} days ago`);
+  };
+
+  const copy = {
+    headerTitle: tr("Quản lý website", "Website management"),
+    hintTitle: tr("Mẹo hữu ích", "Pro tip"),
+    hintBody: tr(
+      "Thêm *.facebook.com để chặn tất cả subdomain của Facebook. Bạn cũng có thể nhập hàng loạt từ file .txt/.csv/.json.",
+      "Add *.facebook.com to cover all Facebook subdomains. You can also bulk import from .txt/.csv/.json."
+    ),
+    validation: {
+      invalid: tr(
+        "URL không hợp lệ. Vui lòng nhập domain hoặc pattern (vd: *.example.com).",
+        "Invalid URL. Please enter a domain or pattern (e.g., *.example.com)."
+      ),
+      duplicate: tr("URL đã tồn tại trong danh sách.", "URL already exists in the list."),
+      loadError: tr("Không thể tải danh sách. Đang hiển thị dữ liệu lưu tạm.", "Unable to load lists. Showing cached data."),
+      removeError: tr("Không thể xóa URL. Vui lòng thử lại.", "Unable to remove URL. Please try again."),
+      bulkEmpty: tr("Không URL nào được thêm từ file.", "No URLs were added from the file."),
+      bulkFileError: tr("Không thể đọc file URL. Vui lòng thử lại.", "Could not read URL file. Please try again."),
+      bulkParsed: (added: number, skipped: number) =>
+        skipped
+          ? tr(`Đã thêm ${added} URL, bỏ qua ${skipped} URL không hợp lệ/trùng.`, `Added ${added} URLs, skipped ${skipped} invalid/duplicate.`)
+          : null,
+      cacheSaveWarn: tr("Không thể lưu cache whitelist/blacklist", "Could not cache whitelist/blacklist"),
+      loadCacheWarn: tr("API trả về danh sách trống, giữ nguyên cache hiện tại", "API returned empty lists, keeping cached data"),
+    },
+    card: (type: ListType): CardCopy => ({
+      title: type === "whitelist" ? tr("Danh sách cho phép", "Allowed list") : tr("Danh sách chặn", "Blocked list"),
+      searchPlaceholder: tr("Tìm kiếm trong danh sách...", "Search list..."),
+      emptyTitle: tr("Danh sách trống", "No entries"),
+      emptyDesc: tr("Thêm website để quản lý truy cập", "Add websites to manage access"),
+      emptyCta: tr("+ Thêm URL mới", "+ Add new URL"),
+      addPlaceholder: tr("https://example.com hoặc *.example.com", "https://example.com or *.example.com"),
+      cancel: tr("Hủy", "Cancel"),
+      add: tr("Thêm", "Add"),
+      bulkLabel: tr("Nhập nhanh từ file (.txt, .csv, .json)", "Bulk import from file (.txt, .csv, .json)"),
+      upload: tr("Tải file", "Upload file"),
+      deleteLabel: (url: string) => tr(`Xóa ${url}`, `Delete ${url}`),
+      visitsLabel: (count: number) => tr(`${count} lần truy cập`, `${count} visits`),
+      timeAgo: formatTimeAgo,
+      uploadAria: (title: string) => tr(`Tải file URL cho ${title}`, `Upload URL file for ${title}`),
+    }),
+  };
 
   const LOCAL_CACHE_KEYS = {
     [STORAGE_KEYS.WHITELIST]: "xdynamic_cache_whitelist",
@@ -309,12 +386,9 @@ const WebsiteManagement: React.FC<WebsiteManagementProps> = ({ onSave }) => {
 
   const writeToLocalCache = (key: string, values: string[]) => {
     try {
-      localStorage.setItem(
-        LOCAL_CACHE_KEYS[key as keyof typeof LOCAL_CACHE_KEYS],
-        JSON.stringify(values)
-      );
+      localStorage.setItem(LOCAL_CACHE_KEYS[key as keyof typeof LOCAL_CACHE_KEYS], JSON.stringify(values));
     } catch (error) {
-      logger.warn(`Không thể lưu cache ${key} vào localStorage`, error);
+      logger.warn(copy.validation.cacheSaveWarn, error);
     }
   };
 
@@ -328,14 +402,14 @@ const WebsiteManagement: React.FC<WebsiteManagementProps> = ({ onSave }) => {
       const syncList = await readArea("sync");
       if (syncList.length) return syncList;
     } catch (error) {
-      logger.warn(`Không thể tải ${key} từ sync storage`, error);
+      logger.warn(tr("Không thể tải từ sync storage", "Failed to load from sync storage"), error);
     }
 
     try {
       const localList = await readArea("local");
       if (localList.length) return localList;
     } catch (error) {
-      logger.warn(`Không thể tải ${key} từ local storage`, error);
+      logger.warn(tr("Không thể tải từ local storage", "Failed to load from local storage"), error);
     }
 
     const cached = readFromLocalCache(key);
@@ -359,12 +433,13 @@ const WebsiteManagement: React.FC<WebsiteManagementProps> = ({ onSave }) => {
           setBlacklist(cachedBlacklist.map((url) => toUrlItem({ url })));
         }
       } catch (error) {
-        logger.warn("Không thể tải danh sách cache từ storage", error);
+        logger.warn(tr("Không thể tải danh sách cache từ storage", "Failed to load cached lists"), error);
       }
     };
 
     loadCachedLists();
     fetchLists();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const persistLists = async (nextWhitelist: URLItem[], nextBlacklist: URLItem[]) => {
@@ -381,27 +456,23 @@ const WebsiteManagement: React.FC<WebsiteManagementProps> = ({ onSave }) => {
 
       const failed = writes.filter((result) => result.status === "rejected");
       if (failed.length) {
-        logger.warn("Không thể lưu cache whitelist/blacklist", failed);
+        logger.warn(copy.validation.cacheSaveWarn, failed);
       }
 
-      // Luôn lưu thêm vào localStorage để đảm bảo tồn tại khi không có Chrome storage (dev/offline)
       writeToLocalCache(STORAGE_KEYS.WHITELIST, whitelistUrls);
       writeToLocalCache(STORAGE_KEYS.BLACKLIST, blacklistUrls);
     } catch (error) {
-      logger.warn("Không thể lưu cache whitelist/blacklist", error);
+      logger.warn(copy.validation.cacheSaveWarn, error);
     }
   };
 
   const fetchLists = async () => {
     try {
-      const [white, black] = await Promise.all([
-        filterService.getWhitelist(),
-        filterService.getBlacklist(),
-      ]);
+      const [white, black] = await Promise.all([filterService.getWhitelist(), filterService.getBlacklist()]);
       const hasCached = whitelist.length > 0 || blacklist.length > 0;
 
       if (!white.length && !black.length && hasCached) {
-        logger.warn("API trả về danh sách trống, giữ nguyên cache hiện tại");
+        logger.warn(copy.validation.loadCacheWarn);
         return;
       }
 
@@ -410,7 +481,7 @@ const WebsiteManagement: React.FC<WebsiteManagementProps> = ({ onSave }) => {
       await persistLists(white, black);
     } catch (error) {
       logger.error("Failed to fetch filter lists:", error);
-      setValidationError("Không thể tải danh sách. Đang hiển thị dữ liệu lưu tạm.");
+      setValidationError(copy.validation.loadError);
     }
   };
 
@@ -419,22 +490,18 @@ const WebsiteManagement: React.FC<WebsiteManagementProps> = ({ onSave }) => {
     return list.some((item) => item.url.toLowerCase() === url.toLowerCase());
   };
 
-  const addUrl = async (
-    type: ListType,
-    rawInput: string,
-    options?: { silent?: boolean }
-  ): Promise<URLItem | null> => {
+  const addUrl = async (type: ListType, rawInput: string, options?: { silent?: boolean }): Promise<URLItem | null> => {
     const normalized = normalizeUrlInput(rawInput);
     if (!normalized) {
       if (!options?.silent) {
-        setValidationError("URL không hợp lệ. Vui lòng nhập domain hoặc pattern (vd: *.example.com).");
+        setValidationError(copy.validation.invalid);
       }
       return null;
     }
 
     if (isDuplicate(type, normalized)) {
       if (!options?.silent) {
-        setValidationError("URL đã tồn tại trong danh sách.");
+        setValidationError(copy.validation.duplicate);
       }
       return null;
     }
@@ -442,11 +509,9 @@ const WebsiteManagement: React.FC<WebsiteManagementProps> = ({ onSave }) => {
     let newItem: URLItem;
 
     try {
-      newItem = type === "whitelist"
-        ? await filterService.addToWhitelist(normalized)
-        : await filterService.addToBlacklist(normalized);
+      newItem = type === "whitelist" ? await filterService.addToWhitelist(normalized) : await filterService.addToBlacklist(normalized);
     } catch (error) {
-      logger.warn(`API ${type} thêm URL thất bại, fallback lưu cục bộ`, error);
+      logger.warn(`API ${type} add failed, fallback to local save`, error);
       newItem = createLocalItem(normalized);
     }
 
@@ -504,7 +569,7 @@ const WebsiteManagement: React.FC<WebsiteManagementProps> = ({ onSave }) => {
       onSave?.();
     } catch (error) {
       logger.error(`Failed to remove from ${type}:`, error);
-      setValidationError("Không thể xóa URL. Vui lòng thử lại.");
+      setValidationError(copy.validation.removeError);
     }
   };
 
@@ -532,7 +597,7 @@ const WebsiteManagement: React.FC<WebsiteManagementProps> = ({ onSave }) => {
     try {
       const urls = await parseUrlsFromFile(file);
       if (!urls.length) {
-        setValidationError("File không chứa URL hợp lệ.");
+        setValidationError(copy.validation.bulkEmpty);
         return;
       }
 
@@ -549,7 +614,8 @@ const WebsiteManagement: React.FC<WebsiteManagementProps> = ({ onSave }) => {
       }
 
       if (added > 0) {
-        setValidationError(skipped ? `Đã thêm ${added} URL, bỏ qua ${skipped} URL không hợp lệ/trùng.` : null);
+        const parsedMessage = copy.validation.bulkParsed(added, skipped);
+        setValidationError(parsedMessage);
         if (type === "whitelist") {
           setWhitelistInput("");
           setIsWhitelistAdding(false);
@@ -558,46 +624,44 @@ const WebsiteManagement: React.FC<WebsiteManagementProps> = ({ onSave }) => {
           setIsBlacklistAdding(false);
         }
       } else {
-        setValidationError("Không URL nào được thêm từ file.");
+        setValidationError(copy.validation.bulkEmpty);
       }
       onSave?.();
     } catch (error) {
       logger.error("Failed to import URLs from file:", error);
-      setValidationError("Không thể đọc file URL. Vui lòng thử lại.");
+      setValidationError(copy.validation.bulkFileError);
     } finally {
       setUploadingType(null);
     }
   };
 
-  const filteredWhitelist = whitelist.filter((item) =>
-    item.url.toLowerCase().includes(whitelistSearch.toLowerCase())
-  );
-
-  const filteredBlacklist = blacklist.filter((item) =>
-    item.url.toLowerCase().includes(blacklistSearch.toLowerCase())
-  );
+  const filteredWhitelist = whitelist.filter((item) => item.url.toLowerCase().includes(whitelistSearch.toLowerCase()));
+  const filteredBlacklist = blacklist.filter((item) => item.url.toLowerCase().includes(blacklistSearch.toLowerCase()));
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center">
-          <span className="text-3xl mr-3" aria-hidden="true">🌐</span>
-          Quản Lý Website
+          <span className="text-3xl mr-3" aria-hidden="true">
+            🌐
+          </span>
+          {copy.headerTitle}
         </h2>
       </div>
 
-      {/* Validation Error */}
       {validationError && (
         <div className="bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-lg p-4 flex items-center">
           <svg className="w-5 h-5 text-red-600 dark:text-red-400 mr-3" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+            <path
+              fillRule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+              clipRule="evenodd"
+            />
           </svg>
           <span className="text-sm text-red-800 dark:text-red-200">{validationError}</span>
         </div>
       )}
 
-      {/* Cards Grid */}
       <div className="grid md:grid-cols-2 gap-6">
         <URLCard
           items={filteredWhitelist}
@@ -612,6 +676,7 @@ const WebsiteManagement: React.FC<WebsiteManagementProps> = ({ onSave }) => {
           onBulkAdd={(file) => handleBulkUpload("whitelist", file)}
           isUploading={uploadingType === "whitelist"}
           type="whitelist"
+          copy={copy.card("whitelist")}
         />
 
         <URLCard
@@ -627,17 +692,19 @@ const WebsiteManagement: React.FC<WebsiteManagementProps> = ({ onSave }) => {
           onBulkAdd={(file) => handleBulkUpload("blacklist", file)}
           isUploading={uploadingType === "blacklist"}
           type="blacklist"
+          copy={copy.card("blacklist")}
         />
       </div>
 
-      {/* Hint Card */}
       <div className="bg-yellow-50 dark:bg-yellow-900 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4">
         <div className="flex items-start">
-          <span className="text-2xl mr-3" aria-hidden="true">💡</span>
+          <span className="text-2xl mr-3" aria-hidden="true">
+            💡
+          </span>
           <div>
-            <h4 className="font-semibold text-yellow-900 dark:text-yellow-100 mb-1">Mẹo hữu ích</h4>
+            <h4 className="font-semibold text-yellow-900 dark:text-yellow-100 mb-1">{copy.hintTitle}</h4>
             <p className="text-sm text-yellow-800 dark:text-yellow-200">
-              Thêm <code className="px-1 py-0.5 bg-yellow-200 dark:bg-yellow-800 rounded">*.facebook.com</code> để chặn tất cả subdomain của Facebook. Bạn cũng có thể nhập hàng loạt từ file .txt/.csv/.json.
+              {copy.hintBody}
             </p>
           </div>
         </div>

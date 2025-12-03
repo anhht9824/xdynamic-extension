@@ -7,6 +7,8 @@ import { subscriptionService } from "../../services/subscription.service";
 import { logger } from "../../utils";
 import PaymentConfirmationScreen from "../../payment/screens/PaymentConfirmationScreen";
 import { PaymentResult } from "../../services/payment.service";
+import { useLanguageContext } from "../../providers/LanguageProvider";
+import { Language } from "../../types";
 
 interface AccountTabProps {
   onNavigateToBilling: () => void;
@@ -43,6 +45,8 @@ const AccountTab: React.FC<AccountTabProps> = ({
   });
 
   const [localPrivacySettings, setLocalPrivacySettings] = useState<PrivacySettings>(privacySettings);
+  const { language } = useLanguageContext();
+  const tr = (vi: string, en: string) => (language === "vi" ? vi : en);
 
   // Update local state when props change
   useEffect(() => {
@@ -76,7 +80,7 @@ const AccountTab: React.FC<AccountTabProps> = ({
         setUpgradeResult({
           transactionId: `SUB-${Date.now()}`,
           status: "success",
-          message: "Đã chuyển về gói FREE",
+          message: tr("Đã chuyển về gói FREE", "Switched to FREE plan"),
           timestamp: new Date().toISOString(),
           amount: 0,
           currentPlan: "free",
@@ -86,7 +90,7 @@ const AccountTab: React.FC<AccountTabProps> = ({
         setUpgradeResult({
           transactionId: `SUB-${Date.now()}`,
           status: "success",
-          message: `Nâng cấp gói ${plan.nameVi} thành công!`,
+          message: tr(`Nâng cấp gói ${plan.nameVi} thành công!`, `Upgraded plan ${plan.name} successfully!`),
           timestamp: new Date().toISOString(),
           amount: plan.price || 0,
           currentPlan: plan.type,
@@ -102,7 +106,7 @@ const AccountTab: React.FC<AccountTabProps> = ({
       setUpgradeResult({
         transactionId: `SUB-${Date.now()}`,
         status: "failed",
-        message: error?.message || "Có lỗi khi cập nhật gói dịch vụ",
+        message: error?.message || tr("Có lỗi khi cập nhật gói dịch vụ", "Error updating plan"),
         timestamp: new Date().toISOString(),
         amount: plan.price || 0,
         failureReason: "unknown",
@@ -116,15 +120,15 @@ const AccountTab: React.FC<AccountTabProps> = ({
 
   const handleCancel = async () => {
     try {
-      if (confirm("Bạn có chắc chắn muốn hủy gói đăng ký hiện tại? Bạn sẽ trở về gói FREE.")) {
+      if (confirm(tr("Bạn có chắc chắn muốn hủy gói đăng ký hiện tại? Bạn sẽ trở về gói FREE.", "Are you sure you want to cancel the current plan? You will return to FREE."))) {
         await subscriptionService.cancelSubscription();
         await fetchSubscription();
         if (onRefreshProfile) onRefreshProfile();
-        alert("Hủy gói thành công!");
+        alert(tr("Hủy gói thành công!", "Plan cancelled successfully!"));
       }
     } catch (error: any) {
       logger.error("Failed to cancel subscription", error);
-      alert(error.message || "Hủy gói thất bại");
+      alert(error.message || tr("Hủy gói thất bại", "Plan cancellation failed"));
     }
   };
 
@@ -140,7 +144,7 @@ const AccountTab: React.FC<AccountTabProps> = ({
       !passwordForm.oldPassword ||
       !passwordForm.newPassword
     ) {
-      alert("Mật khẩu không khớp hoặc thiếu thông tin!");
+      alert(tr("Mật khẩu không khớp hoặc thiếu thông tin!", "Passwords do not match or missing fields!"));
       return;
     }
 
@@ -211,25 +215,25 @@ const AccountTab: React.FC<AccountTabProps> = ({
           <svg className="w-6 h-6 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
           </svg>
-          Gói đăng ký & Thanh toán
+          {tr("Gói đăng ký & Thanh toán", "Subscription & Billing")}
         </h2>
         
         {isLoadingSubscription ? (
-          <div className="text-center py-4 text-gray-500">Đang tải thông tin gói...</div>
+          <div className="text-center py-4 text-gray-500">{tr("Đang tải thông tin gói...", "Loading subscription...")}</div>
         ) : subscription ? (
           <div className="space-y-6">
             <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Gói hiện tại</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{tr("Gói hiện tại", "Current plan")}</p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white capitalize">
                   {subscription.plan}
                 </p>
                 <p className="text-sm text-gray-500 mt-1">
-                  Hạn mức: {subscription.used_quota} / {subscription.monthly_quota} ảnh/tháng
+                  {tr("Hạn mức", "Allowance")}: {subscription.used_quota} / {subscription.monthly_quota} {tr("ảnh/tháng", "images/month")}
                 </p>
                 {subscription.expires_at && (
                   <p className="text-xs text-gray-400 mt-1">
-                    Hết hạn: {new Date(subscription.expires_at).toLocaleDateString()}
+                    {tr("Hết hạn", "Expires")}: {new Date(subscription.expires_at).toLocaleDateString()}
                   </p>
                 )}
               </div>
@@ -240,7 +244,7 @@ const AccountTab: React.FC<AccountTabProps> = ({
                     className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-60"
                     disabled={isProcessingUpgrade}
                   >
-                    Chọn gói nâng cấp
+                    {tr("Chọn gói nâng cấp", "Upgrade plan")}
                   </button>
                 ) : (
                   <div className="space-x-2">
@@ -249,13 +253,13 @@ const AccountTab: React.FC<AccountTabProps> = ({
                       className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-60"
                       disabled={isProcessingUpgrade}
                     >
-                      Đổi gói
+                      {tr("Đổi gói", "Change plan")}
                     </button>
                     <button 
                       onClick={handleCancel}
                       className="px-4 py-2 border border-red-500 text-red-500 rounded-lg hover:bg-red-50 transition-colors"
                     >
-                      Hủy gói
+                      {tr("Hủy gói", "Cancel plan")}
                     </button>
                   </div>
                 )}
@@ -271,7 +275,7 @@ const AccountTab: React.FC<AccountTabProps> = ({
                     </svg>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Số dư tài khoản</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">{tr("Số dư tài khoản", "Account balance")}</p>
                     <p className="text-2xl font-bold text-green-600 dark:text-green-400">
                       {new Intl.NumberFormat('vi-VN').format(userCredits)} đ
                     </p>
@@ -288,12 +292,12 @@ const AccountTab: React.FC<AccountTabProps> = ({
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                 </svg>
-                <span className="font-semibold">Nạp thêm tiền vào ví</span>
+                <span className="font-semibold">{tr("Nạp thêm tiền vào ví", "Top up wallet")}</span>
               </RippleButton>
             </div>
           </div>
         ) : (
-          <div className="text-center py-4 text-red-500">Không thể tải thông tin gói</div>
+          <div className="text-center py-4 text-red-500">{tr("Không thể tải thông tin gói", "Unable to load subscription")}</div>
         )}
       </div>
 
@@ -303,16 +307,16 @@ const AccountTab: React.FC<AccountTabProps> = ({
           <svg className="w-6 h-6 mr-2 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
           </svg>
-          Bảo mật tài khoản
+          {tr("Bảo mật tài khoản", "Account security")}
         </h2>
         <p className="text-gray-600 dark:text-gray-400 mb-4">
-          Cập nhật mật khẩu và cài đặt xác thực hai yếu tố
+          {tr("Cập nhật mật khẩu và cài đặt xác thực hai yếu tố", "Update password and 2FA settings")}
         </p>
         <button
           onClick={() => setShowPasswordModal(true)}
           className="w-full md:w-auto px-6 py-3 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg font-semibold transition-colors"
         >
-          Thay đổi mật khẩu
+          {tr("Thay đổi mật khẩu", "Change password")}
         </button>
       </div>
 
@@ -322,10 +326,10 @@ const AccountTab: React.FC<AccountTabProps> = ({
           <svg className="w-6 h-6 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
           </svg>
-          Liên kết tài khoản
+          {tr("Liên kết tài khoản", "Linked accounts")}
         </h2>
         <p className="text-gray-600 dark:text-gray-400 mb-4">
-          Kết nối với các dịch vụ khác để đăng nhập dễ dàng
+          {tr("Kết nối với các dịch vụ khác để đăng nhập dễ dàng", "Connect with other services for easier sign-in")}
         </p>
         <div className="space-y-3">
           {linkedAccounts.map((account) => (
@@ -343,13 +347,13 @@ const AccountTab: React.FC<AccountTabProps> = ({
                 </div>
               </div>
               <button
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                  account.connected
-                    ? "bg-red-500 hover:bg-red-600 text-white"
-                    : "bg-blue-500 hover:bg-blue-600 text-white"
-                }`}
-              >
-                {account.connected ? "Ngắt kết nối" : "Kết nối"}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                account.connected
+                  ? "bg-red-500 hover:bg-red-600 text-white"
+                  : "bg-blue-500 hover:bg-blue-600 text-white"
+              }`}
+            >
+                {account.connected ? tr("Ngắt kết nối", "Disconnect") : tr("Kết nối", "Connect")}
               </button>
             </div>
           ))}
@@ -362,18 +366,18 @@ const AccountTab: React.FC<AccountTabProps> = ({
           <svg className="w-6 h-6 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
           </svg>
-          Quyền riêng tư
+          {tr("Quyền riêng tư", "Privacy")}
         </h2>
         <p className="text-gray-600 dark:text-gray-400 mb-6">
-          Kiểm soát cách chúng tôi sử dụng dữ liệu của bạn
+          {tr("Kiểm soát cách chúng tôi sử dụng dữ liệu của bạn", "Control how we use your data")}
         </p>
 
         <div className="space-y-4">
           <label className="flex items-center justify-between cursor-pointer">
             <div>
-              <p className="font-semibold text-gray-900 dark:text-white">Chia sẻ dữ liệu sử dụng</p>
+              <p className="font-semibold text-gray-900 dark:text-white">{tr("Chia sẻ dữ liệu sử dụng", "Share usage data")}</p>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Giúp cải thiện sản phẩm bằng dữ liệu ẩn danh
+                {tr("Giúp cải thiện sản phẩm bằng dữ liệu ẩn danh", "Help improve the product with anonymous data")}
               </p>
             </div>
             <input
@@ -390,7 +394,7 @@ const AccountTab: React.FC<AccountTabProps> = ({
             <div>
               <p className="font-semibold text-gray-900 dark:text-white">Analytics</p>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Cho phép theo dõi hành vi sử dụng
+                {tr("Cho phép theo dõi hành vi sử dụng", "Allow usage analytics")}
               </p>
             </div>
             <input
@@ -405,9 +409,9 @@ const AccountTab: React.FC<AccountTabProps> = ({
 
           <label className="flex items-center justify-between cursor-pointer">
             <div>
-              <p className="font-semibold text-gray-900 dark:text-white">Báo cáo lỗi</p>
+              <p className="font-semibold text-gray-900 dark:text-white">{tr("Báo cáo lỗi", "Error reporting")}</p>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Tự động gửi báo cáo lỗi để cải thiện
+                {tr("Tự động gửi báo cáo lỗi để cải thiện", "Automatically send crash reports to improve quality")}
               </p>
             </div>
             <input
@@ -422,9 +426,9 @@ const AccountTab: React.FC<AccountTabProps> = ({
 
           <label className="flex items-center justify-between cursor-pointer">
             <div>
-              <p className="font-semibold text-gray-900 dark:text-white">Quảng cáo cá nhân hóa</p>
+              <p className="font-semibold text-gray-900 dark:text-white">{tr("Quảng cáo cá nhân hóa", "Personalized ads")}</p>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Nhận quảng cáo phù hợp với sở thích của bạn
+                {tr("Nhận quảng cáo phù hợp với sở thích của bạn", "Receive ads tailored to your interests")}
               </p>
             </div>
             <input
@@ -442,7 +446,7 @@ const AccountTab: React.FC<AccountTabProps> = ({
           onClick={handlePrivacySave}
           className="w-full mt-6 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors"
         >
-          Lưu cài đặt quyền riêng tư
+          {tr("Lưu cài đặt quyền riêng tư", "Save privacy settings")}
         </button>
       </div>
 
@@ -452,35 +456,35 @@ const AccountTab: React.FC<AccountTabProps> = ({
           <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
           </svg>
-          Vùng nguy hiểm
+          {tr("Vùng nguy hiểm", "Danger zone")}
         </h2>
         <p className="text-red-700 dark:text-red-300 mb-4">
-          Hành động này không thể hoàn tác. Tất cả dữ liệu sẽ bị xóa vĩnh viễn.
+          {tr("Hành động này không thể hoàn tác. Tất cả dữ liệu sẽ bị xóa vĩnh viễn.", "This action cannot be undone. All data will be permanently deleted.")}
         </p>
         {!showDeleteConfirm ? (
           <button
             onClick={() => setShowDeleteConfirm(true)}
             className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-colors"
           >
-            Xóa tài khoản
+            {tr("Xóa tài khoản", "Delete account")}
           </button>
         ) : (
           <div className="space-y-3">
             <p className="font-bold text-red-800 dark:text-red-200">
-              Bạn có chắc chắn? Hành động này không thể hoàn tác!
+              {tr("Bạn có chắc chắn? Hành động này không thể hoàn tác!", "Are you sure? This cannot be undone!")}
             </p>
             <div className="flex space-x-3">
               <button
                 onClick={handleDeleteAccount}
                 className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-colors"
               >
-                Xác nhận xóa
+                {tr("Xác nhận xóa", "Confirm delete")}
               </button>
               <button
                 onClick={() => setShowDeleteConfirm(false)}
                 className="px-6 py-3 bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-800 dark:text-white rounded-lg font-semibold transition-colors"
               >
-                Hủy
+                {tr("Hủy", "Cancel")}
               </button>
             </div>
           </div>
@@ -494,7 +498,7 @@ const AccountTab: React.FC<AccountTabProps> = ({
             <button
               onClick={() => setShowUpgradeScreen(false)}
               className="absolute right-4 top-4 z-10 p-2 rounded-full bg-white/90 text-gray-700 hover:bg-white shadow-lg dark:bg-slate-900 dark:text-white"
-              aria-label="Đóng chọn gói"
+              aria-label={tr("Đóng chọn gói", "Close plan selection")}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -510,7 +514,7 @@ const AccountTab: React.FC<AccountTabProps> = ({
                 <div className="bg-black/40 backdrop-blur-sm rounded-2xl w-full h-full flex items-center justify-center">
                   <div className="flex items-center space-x-3 px-4 py-3 bg-white dark:bg-slate-900 rounded-lg shadow-lg text-gray-800 dark:text-white">
                     <div className="h-5 w-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                    <span>Đang xử lý nâng cấp...</span>
+                    <span>{tr("Đang xử lý nâng cấp...", "Processing upgrade...")}</span>
                   </div>
                 </div>
               </div>
@@ -540,51 +544,51 @@ const AccountTab: React.FC<AccountTabProps> = ({
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className={`${surface} shadow-2xl max-w-md w-full p-6`}>
             <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-              Thay đổi mật khẩu
+              {tr("Thay đổi mật khẩu", "Change password")}
             </h3>
 
             <div className="space-y-4">
               <FormInput
-                label="Mật khẩu hiện tại"
+                label={tr("Mật khẩu hiện tại", "Current password")}
                 type="password"
                 value={passwordForm.oldPassword}
                 onChange={(value) =>
                   setPasswordForm({ ...passwordForm, oldPassword: value })
                 }
-                placeholder="Nhập mật khẩu hiện tại"
+                placeholder={tr("Nhập mật khẩu hiện tại", "Enter current password")}
                 required
               />
 
               <FormInput
-                label="Mật khẩu mới"
+                label={tr("Mật khẩu mới", "New password")}
                 type="password"
                 value={passwordForm.newPassword}
                 onChange={(value) =>
                   setPasswordForm({ ...passwordForm, newPassword: value })
                 }
-                placeholder="Nhập mật khẩu mới"
+                placeholder={tr("Nhập mật khẩu mới", "Enter new password")}
                 required
                 validate={(value) => {
-                  if (value.length < 8) return "Mật khẩu phải có ít nhất 8 ký tự";
-                  if (!/(?=.*[a-z])/.test(value)) return "Phải có ít nhất 1 chữ thường";
-                  if (!/(?=.*[A-Z])/.test(value)) return "Phải có ít nhất 1 chữ hoa";
-                  if (!/(?=.*\d)/.test(value)) return "Phải có ít nhất 1 số";
+                  if (value.length < 8) return tr("Mật khẩu phải có ít nhất 8 ký tự", "Password must be at least 8 characters");
+                  if (!(/(?=.*[a-z])/.test(value))) return tr("Phải có ít nhất 1 chữ thường", "Must include at least one lowercase letter");
+                  if (!(/(?=.*[A-Z])/.test(value))) return tr("Phải có ít nhất 1 chữ hoa", "Must include at least one uppercase letter");
+                  if (!(/(?=.*\d)/.test(value))) return tr("Phải có ít nhất 1 số", "Must include at least one number");
                   return null;
                 }}
                 validateOnChange
               />
 
               <FormInput
-                label="Xác nhận mật khẩu mới"
+                label={tr("Xác nhận mật khẩu mới", "Confirm new password")}
                 type="password"
                 value={passwordForm.confirmPassword}
                 onChange={(value) =>
                   setPasswordForm({ ...passwordForm, confirmPassword: value })
                 }
-                placeholder="Nhập lại mật khẩu mới"
+                placeholder={tr("Nhập lại mật khẩu mới", "Re-enter new password")}
                 required
                 validate={(value) => 
-                  value !== passwordForm.newPassword ? "Mật khẩu xác nhận không khớp" : null
+                  value !== passwordForm.newPassword ? tr("Mật khẩu xác nhận không khớp", "Confirmation password does not match") : null
                 }
                 validateOnChange
               />
@@ -595,18 +599,19 @@ const AccountTab: React.FC<AccountTabProps> = ({
                 onClick={handlePasswordChange}
                 className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors"
               >
-                Lưu
+                {tr("Lưu", "Save")}
               </button>
               <button
                 onClick={() => setShowPasswordModal(false)}
                 className="flex-1 px-6 py-3 bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-800 dark:text-white rounded-lg font-semibold transition-colors"
               >
-                Hủy
+                {tr("Hủy", "Cancel")}
               </button>
             </div>
           </div>
         </div>
       )}
+
     </div>
   );
 };

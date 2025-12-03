@@ -3,6 +3,7 @@ import { Button } from "../../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
 import { CheckCircle, XCircle, Download, Share2, ArrowLeft } from "lucide-react";
 import { PaymentResult } from "../../services/payment.service";
+import { useLanguageContext } from "../../providers/LanguageProvider";
 
 interface PaymentConfirmationScreenProps {
   paymentData: PaymentResult;
@@ -17,130 +18,138 @@ const PaymentConfirmationScreen: React.FC<PaymentConfirmationScreenProps> = ({
   onDownloadReceipt,
   onShareReceipt,
 }) => {
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("vi-VN").format(amount) + " VND";
+  const { language } = useLanguageContext();
+  const tr = (vi: string, en: string) => (language === "vi" ? vi : en);
+
+  const formatCurrency = (amount: number) =>
+    new Intl.NumberFormat(language === "vi" ? "vi-VN" : "en-US", {
+      style: "currency",
+      currency: "VND",
+      minimumFractionDigits: 0,
+    }).format(amount);
+
+  const formatDateTime = (timestamp: string) => new Date(timestamp).toLocaleString(language === "vi" ? "vi-VN" : "en-US");
+
+  const mapFailureReasonText = (reason: NonNullable<PaymentResult["failureReason"]>) => {
+    switch (reason) {
+      case "insufficient_balance":
+        return tr("Không đủ số dư để thanh toán", "Insufficient balance to pay");
+      case "network_error":
+        return tr("Không kết nối được máy chủ", "Could not reach the payment server");
+      default:
+        return tr("Thanh toán thất bại", "Payment failed");
+    }
   };
 
-  const formatDateTime = (timestamp: string) => {
-    return new Date(timestamp).toLocaleString("vi-VN");
+  const copy = {
+    statusSuccess: tr("Thanh toán thành công", "Payment successful"),
+    statusFail: tr("Thanh toán thất bại", "Payment failed"),
+    successMessage: tr("Giao dịch của bạn đã được xử lý thành công.", "Your payment has been processed successfully."),
+    failureMessage: tr("Thanh toán thất bại. Vui lòng thử lại.", "Payment failed. Please try again."),
+    amount: tr("Số tiền", "Amount"),
+    state: tr("Trạng thái", "Status"),
+    stateSuccess: tr("Hoàn tất", "Completed"),
+    stateFail: tr("Thất bại", "Failed"),
+    details: tr("Chi tiết giao dịch", "Transaction details"),
+    transactionId: tr("Mã giao dịch", "Transaction ID"),
+    time: tr("Thời gian", "Time"),
+    currentPlan: tr("Gói hiện tại", "Current plan"),
+    failureReason: tr("Lý do thất bại", "Failure reason"),
+    unknownReason: tr("Không rõ lý do", "Unknown reason"),
+    back: tr("Quay lại Dashboard", "Back to Dashboard"),
+    download: tr("Tải PDF", "Download PDF"),
+    share: tr("Chia sẻ", "Share"),
+    retry: tr("Thử lại sau", "Try again later"),
+    support: tr("Cần hỗ trợ?", "Need help?"),
+    hotline: tr("Hotline", "Hotline"),
+    email: "support@xdynamic.com",
   };
 
   const isSuccess = paymentData.status === "success";
   const friendlyFailure = !isSuccess && paymentData.failureReason ? mapFailureReasonText(paymentData.failureReason) : null;
-  const friendlyMessage =
-    paymentData.message ||
-    (isSuccess ? "Giao dich cua ban da duoc xu ly thanh cong." : friendlyFailure || "Thanh toan that bai. Vui long thu lai.");
+  const friendlyMessage = paymentData.message || (isSuccess ? copy.successMessage : friendlyFailure || copy.failureMessage);
 
-	  return (
-	    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-	      <Card className="w-full max-w-lg shadow-xl">
-	        <CardHeader className="text-center space-y-3 pt-8">
-	          <div className="flex justify-center">
-	            {isSuccess ? (
-	              <CheckCircle className="w-16 h-16 text-green-500" />
-	            ) : (
-	              <XCircle className="w-16 h-16 text-red-500" />
-	            )}
-	          </div>
-	          <CardTitle className={`text-3xl font-bold ${isSuccess ? "text-green-600" : "text-red-600"}`}>
-	            {isSuccess ? "Thanh toán thành công" : "Thanh toán thất bại"}
-	          </CardTitle>
-	          <p className="text-muted-foreground text-sm">{friendlyMessage}</p>
-	        </CardHeader>
-	
-	        <CardContent className="space-y-6 pb-8">
-	          <div className="grid grid-cols-2 gap-4 border-y py-4">
-	            <div className="space-y-1">
-	              <p className="text-xs uppercase tracking-wider text-muted-foreground">Số tiền</p>
-	              <p className={`text-2xl font-bold ${isSuccess ? "text-green-600" : "text-red-600"}`}>
-	                {formatCurrency(paymentData.amount)}
-	              </p>
-	            </div>
-	            <div className="space-y-1">
-	              <p className="text-xs uppercase tracking-wider text-muted-foreground">Trạng thái</p>
-	              <p className={`text-2xl font-bold ${isSuccess ? "text-green-600" : "text-red-600"}`}>
-	                {isSuccess ? "Hoàn tất" : "Thất bại"}
-	              </p>
-	            </div>
-	          </div>
-	
-	          <Card className="shadow-none border">
-	            <CardHeader className="p-4 border-b">
-	              <CardTitle className="text-base">Chi tiết giao dịch</CardTitle>
-	            </CardHeader>
-	            <CardContent className="p-4 space-y-2 text-sm">
-	              <DetailRow label="Mã giao dịch" value={paymentData.transactionId} valueClass="font-mono text-primary" />
-	              <DetailRow label="Thời gian" value={formatDateTime(paymentData.timestamp)} />
-	              {paymentData.currentPlan && <DetailRow label="Gói hiện tại" value={paymentData.currentPlan.toUpperCase()} />}
-	              {!isSuccess && (
-	                <DetailRow label="Lý do thất bại" value={friendlyFailure || "Không rõ lý do"} valueClass="text-red-500" />
-	              )}
-	            </CardContent>
-	          </Card>
-	
-	          <div className="space-y-3">
-	            <Button onClick={onBackToDashboard} className="w-full">
-	              <ArrowLeft className="w-4 h-4 mr-2" />
-	              Quay lại Dashboard
-	            </Button>
-	
-	            {isSuccess && (
-	              <div className="grid grid-cols-2 gap-3">
-	                <Button onClick={onDownloadReceipt} variant="outline" className="py-2 text-sm">
-	                  <Download className="w-4 h-4 mr-2" />
-	                  Tải PDF
-	                </Button>
-	
-	                <Button onClick={onShareReceipt} variant="outline" className="py-2 text-sm">
-	                  <Share2 className="w-4 h-4 mr-2" />
-	                  Chia sẻ
-	                </Button>
-	              </div>
-	            )}
-	
-	            {!isSuccess && (
-	              <Button onClick={onBackToDashboard} variant="outline" className="w-full">
-	                Thử lại sau
-	              </Button>
-	            )}
-	          </div>
-	
-	          <div className="text-center text-sm text-muted-foreground">
-	            <p>
-	              <span className="font-semibold text-foreground">Cần hỗ trợ?</span> Hotline <span className="font-mono">1900-1234</span> - Email{" "}
-	              <span className="font-mono">support@xdynamic.com</span>
-	            </p>
-	          </div>
-	        </CardContent>
-	      </Card>
-	    </div>
-	  );
+  const badgeColor = isSuccess ? "bg-green-50 text-green-700 border-green-100" : "bg-red-50 text-red-700 border-red-100";
+  const accentColor = isSuccess ? "text-green-600" : "text-red-600";
+
+  return (
+    <div className="w-full bg-gradient-to-b from-slate-50 to-white p-6 sm:p-8 space-y-6">
+      <div className="flex flex-col items-center text-center gap-3">
+        <div
+          className={`h-16 w-16 rounded-full border-4 ${isSuccess ? "border-green-100" : "border-red-100"} bg-white shadow-md flex items-center justify-center`}
+        >
+          {isSuccess ? <CheckCircle className="w-10 h-10 text-green-600" /> : <XCircle className="w-10 h-10 text-red-600" />}
+        </div>
+        <span className={`px-3 py-1 text-xs font-semibold rounded-full border ${badgeColor}`}>
+          {isSuccess ? copy.stateSuccess : copy.stateFail}
+        </span>
+        <h2 className={`text-3xl font-extrabold ${accentColor}`}>{isSuccess ? copy.statusSuccess : copy.statusFail}</h2>
+        <p className="text-sm text-muted-foreground max-w-md">{friendlyMessage}</p>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4 rounded-xl border border-slate-100 bg-white shadow-sm p-4">
+        <div className="space-y-1">
+          <p className="text-xs uppercase tracking-wider text-muted-foreground">{copy.amount}</p>
+          <p className={`text-2xl font-bold ${accentColor}`}>{formatCurrency(paymentData.amount)}</p>
+        </div>
+        <div className="space-y-1">
+          <p className="text-xs uppercase tracking-wider text-muted-foreground">{copy.state}</p>
+          <p className={`text-2xl font-bold ${accentColor}`}>{isSuccess ? copy.stateSuccess : copy.stateFail}</p>
+        </div>
+      </div>
+
+      <Card className="shadow-sm border border-slate-200">
+        <CardHeader className="p-4 border-b">
+          <CardTitle className="text-base">{copy.details}</CardTitle>
+        </CardHeader>
+        <CardContent className="p-4 space-y-3 text-sm">
+          <DetailRow label={copy.transactionId} value={paymentData.transactionId} valueClass="font-mono text-primary" />
+          <DetailRow label={copy.time} value={formatDateTime(paymentData.timestamp)} />
+          {paymentData.currentPlan && <DetailRow label={copy.currentPlan} value={paymentData.currentPlan.toUpperCase()} />}
+          {!isSuccess && <DetailRow label={copy.failureReason} value={friendlyFailure || copy.unknownReason} valueClass="text-red-600 font-semibold" />}
+        </CardContent>
+      </Card>
+
+      <div className="space-y-3">
+        <Button onClick={onBackToDashboard} className="w-full text-base">
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          {copy.back}
+        </Button>
+
+        {isSuccess ? (
+          <div className="grid grid-cols-2 gap-3">
+            <Button onClick={onDownloadReceipt} variant="outline" className="py-2 text-sm">
+              <Download className="w-4 h-4 mr-2" />
+              {copy.download}
+            </Button>
+
+            <Button onClick={onShareReceipt} variant="outline" className="py-2 text-sm">
+              <Share2 className="w-4 h-4 mr-2" />
+              {copy.share}
+            </Button>
+          </div>
+        ) : (
+          <Button onClick={onBackToDashboard} variant="outline" className="w-full text-base">
+            {copy.retry}
+          </Button>
+        )}
+      </div>
+
+      <div className="text-center text-sm text-muted-foreground">
+        <p>
+          <span className="font-semibold text-foreground">{copy.support}</span> {copy.hotline} <span className="font-mono">1900-1234</span> - Email{" "}
+          <span className="font-mono">{copy.email}</span>
+        </p>
+      </div>
+    </div>
+  );
 };
 
 export default PaymentConfirmationScreen;
 
-const DetailRow = ({
-	  label,
-	  value,
-	  valueClass,
-	}: {
-	  label: string;
-	  value: string;
-	  valueClass?: string;
-	}) => (
-	  <div className="flex items-center justify-between">
-	    <span className="text-muted-foreground">{label}</span>
-	    <span className={`font-medium ${valueClass || "text-foreground"}`}>{value}</span>
-	  </div>
-	);
-
-const mapFailureReasonText = (reason: NonNullable<PaymentResult["failureReason"]>) => {
-  switch (reason) {
-    case "insufficient_balance":
-      return "Khong du so du de thanh toan";
-    case "network_error":
-      return "Khong ket noi duoc may chu";
-    default:
-      return "Thanh toan that bai";
-  }
-};
+const DetailRow = ({ label, value, valueClass }: { label: string; value: string; valueClass?: string }) => (
+  <div className="flex items-center justify-between">
+    <span className="text-muted-foreground">{label}</span>
+    <span className={`font-medium ${valueClass || "text-foreground"}`}>{value}</span>
+  </div>
+);
