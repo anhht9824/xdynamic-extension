@@ -8,8 +8,7 @@ import {
   XCircle,
   Clock,
   ChevronLeft,
-  ChevronRight,
-  Download
+  ChevronRight
 } from 'lucide-react';
 import { useToast } from '../hooks/useToast';
 import { ToastContainer } from '../components/ui/Toast';
@@ -33,34 +32,34 @@ const mockReports: Report[] = [
   { id: 'rpt_005', contentPreview: 'https://example.com/image3.jpg', reportReason: 'Harassment', reporter: 'user_56', submissionDate: '2025-11-29', status: 'reviewed', category: 'Harassment' },
 ];
 
-const getStatusBadge = (status: Report['status']) => {
-  const styles = {
-    pending: 'bg-amber-100 text-amber-800 border border-amber-300',
-    approved: 'bg-green-100 text-green-800 border border-green-300',
-    rejected: 'bg-red-100 text-red-800 border border-red-300',
-    reviewed: 'bg-blue-100 text-blue-800 border border-blue-300',
-  };
-  const icons = {
-    pending: Clock,
-    approved: CheckCircle,
-    rejected: XCircle,
-    reviewed: Eye,
-  };
-  const Icon = icons[status];
-  return (
-    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${styles[status]}`}>
-      <Icon className="w-3 h-3 mr-1.5" />
-      {status.charAt(0).toUpperCase() + status.slice(1)}
-    </span>
-  );
-};
-
 export const Reports: React.FC = () => {
   const [reports] = useState<Report[]>(mockReports);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const { toasts, success } = useToast();
+
+  const getStatusBadge = (status: Report['status']) => {
+    const styles = {
+      pending: 'bg-yellow-100 text-yellow-800',
+      approved: 'bg-green-100 text-green-800',
+      rejected: 'bg-red-100 text-red-800',
+      reviewed: 'bg-blue-100 text-blue-800',
+    };
+    const icons = {
+      pending: Clock,
+      approved: CheckCircle,
+      rejected: XCircle,
+      reviewed: Eye,
+    };
+    const Icon = icons[status];
+    return (
+      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${styles[status]}`}>
+        <Icon className="w-3 h-3 mr-1" />
+        {status.charAt(0).toUpperCase() + status.slice(1)}
+      </span>
+    );
+  };
 
   const handleAction = (reportId: string, action: 'approve' | 'reject') => {
     success(`Report ${reportId} ${action}d successfully`);
@@ -78,35 +77,37 @@ export const Reports: React.FC = () => {
       <ToastContainer toasts={toasts} />
       <div className="space-y-6">
         {/* Page Header */}
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Reported Content</h1>
-          <p className="text-base text-gray-500 mt-2">
-            Review and manage user reports • <span className="font-semibold text-gray-700">{filteredReports.length}</span> reports
-          </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Reports</h1>
+            <p className="text-sm text-gray-500 mt-1">
+              Review and manage user reports • {filteredReports.length} reports
+            </p>
+          </div>
         </div>
 
-        {/* Sticky Filter Toolbar */}
-        <div className="sticky top-16 z-20 bg-white border-b border-gray-200 -mx-6 px-6 py-4 shadow-sm">
-          <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
+        {/* Filters */}
+        <div className="card p-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Search */}
-            <div className="flex-1 relative">
+            <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search by reason or reporter..."
+                placeholder="Search reports..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-700 focus:border-transparent transition-all"
+                className="input pl-10"
               />
             </div>
 
             {/* Status Filter */}
-            <div className="relative sm:w-48">
-              <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            <div className="relative">
+              <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-700 focus:border-transparent transition-all appearance-none bg-white"
+                className="input pl-10 appearance-none"
               >
                 <option value="all">All Status</option>
                 <option value="pending">Pending</option>
@@ -115,17 +116,11 @@ export const Reports: React.FC = () => {
                 <option value="reviewed">Reviewed</option>
               </select>
             </div>
-
-            {/* Export Button */}
-            <button className="flex items-center justify-center px-4 py-2 bg-primary-700 text-white rounded-lg hover:bg-primary-800 transition-colors font-medium text-sm">
-              <Download className="w-4 h-4 mr-2" />
-              Export
-            </button>
           </div>
         </div>
 
         {/* Reports Table */}
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200">
+        <div className="card overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
@@ -134,7 +129,7 @@ export const Reports: React.FC = () => {
                     Report ID
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                    Category
+                    Content Preview
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                     Reason
@@ -154,69 +149,59 @@ export const Reports: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {filteredReports.length > 0 ? (
-                  filteredReports.map((report) => (
-                    <tr key={report.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                        {report.id}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
-                        <span className="px-2.5 py-1 bg-gray-100 text-gray-700 rounded text-xs font-medium">
-                          {report.category}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">
-                        {report.reportReason}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
-                        {report.reporter}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
-                        {new Date(report.submissionDate).toLocaleDateString('vi-VN')}
-                      </td>
-                      <td className="px-6 py-4">
-                        {getStatusBadge(report.status)}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center justify-end space-x-2">
-                          <button
-                            onClick={() => handleAction(report.id, 'approve')}
-                            className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                            title="Approve"
-                          >
-                            <CheckCircle className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleAction(report.id, 'reject')}
-                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                            title="Reject"
-                          >
-                            <XCircle className="w-4 h-4" />
-                          </button>
-                          <button
-                            className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                            title="View Details"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
-                      <p className="text-sm">No reports found matching your criteria</p>
+                {filteredReports.map((report) => (
+                  <tr key={report.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                      {report.id}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600 max-w-xs truncate">
+                      {report.contentPreview}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      {report.reportReason}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      {report.reporter}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      {new Date(report.submissionDate).toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-4">
+                      {getStatusBadge(report.status)}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center justify-end space-x-2">
+                        <button
+                          onClick={() => handleAction(report.id, 'approve')}
+                          className="p-2 text-green-600 hover:bg-green-50 rounded transition-colors"
+                          title="Approve"
+                        >
+                          <CheckCircle className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleAction(report.id, 'reject')}
+                          className="p-2 text-red-600 hover:bg-red-50 rounded transition-colors"
+                          title="Reject"
+                        >
+                          <XCircle className="w-4 h-4" />
+                        </button>
+                        <button
+                          className="p-2 text-gray-600 hover:bg-gray-100 rounded transition-colors"
+                          title="View Details"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
-                )}
+                ))}
               </tbody>
             </table>
           </div>
         </div>
 
         {/* Pagination */}
-        <div className="bg-white rounded-lg shadow-sm px-6 py-4 border border-gray-200 flex items-center justify-between">
+        <div className="card px-6 py-4 flex items-center justify-between">
           <p className="text-sm text-gray-600">
             Showing <span className="font-medium">1</span> to{' '}
             <span className="font-medium">{filteredReports.length}</span> of{' '}
@@ -226,17 +211,17 @@ export const Reports: React.FC = () => {
             <button
               onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
               disabled={currentPage === 1}
-              className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-2 border border-gray-300 rounded hover:bg-gray-50 transition-colors disabled:opacity-50"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <button className="px-3 py-2 bg-primary-700 text-white rounded-lg font-medium text-sm">
+            <button className="px-3 py-2 bg-primary text-white rounded font-medium text-sm">
               1
             </button>
             <button
               onClick={() => setCurrentPage(currentPage + 1)}
               disabled={true}
-              className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-2 border border-gray-300 rounded hover:bg-gray-50 transition-colors disabled:opacity-50"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
