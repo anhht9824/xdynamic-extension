@@ -2,6 +2,10 @@ import * as React from "react";
 
 import { cn } from "../../lib/utils";
 
+type BivariantCallback<Args extends unknown[] = unknown[], Return = void> = {
+  bivarianceHack(...args: Args): Return;
+}["bivarianceHack"];
+
 interface RadioGroupContextValue {
   value?: string;
   onChange: (value: string) => void;
@@ -15,7 +19,7 @@ export interface RadioGroupProps
   extends React.HTMLAttributes<HTMLDivElement> {
   value?: string;
   defaultValue?: string;
-  onValueChange?: (value: string) => void;
+  onValueChange?: BivariantCallback<[string]>;
   name?: string;
 }
 
