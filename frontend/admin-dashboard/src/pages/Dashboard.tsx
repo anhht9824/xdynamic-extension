@@ -48,6 +48,7 @@ export const Dashboard: React.FC = () => {
       icon: Users,
       iconBg: 'bg-blue-50',
       iconColor: 'text-blue-600',
+      borderColor: 'border-l-4 border-blue-500',
     },
     {
       title: 'Total Revenue',
@@ -59,6 +60,7 @@ export const Dashboard: React.FC = () => {
       icon: DollarSign,
       iconBg: 'bg-green-50',
       iconColor: 'text-green-600',
+      borderColor: 'border-l-4 border-green-500',
     },
     {
       title: 'Blocked Content',
@@ -68,6 +70,7 @@ export const Dashboard: React.FC = () => {
       icon: Shield,
       iconBg: 'bg-red-50',
       iconColor: 'text-red-600',
+      borderColor: 'border-l-4 border-red-500',
     },
     {
       title: 'Active Today',
@@ -77,26 +80,27 @@ export const Dashboard: React.FC = () => {
       icon: Activity,
       iconBg: 'bg-purple-50',
       iconColor: 'text-purple-600',
+      borderColor: 'border-l-4 border-purple-500',
     },
   ];
 
   return (
     <DashboardLayout>
       <ToastContainer toasts={toasts} />
-      <div className="space-y-6">
+      <div className="space-y-8">
         {/* Page Header */}
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Welcome back! Here's an overview of your system.
+          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+          <p className="text-base text-gray-500 mt-2">
+            Welcome back! Here's an overview of your system performance.
           </p>
         </div>
 
-        {/* Stats Cards */}
+        {/* Stats Cards - Enhanced Card-based Design */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {isLoading ? (
             [...Array(4)].map((_, i) => (
-              <div key={i} className="card p-6 animate-pulse">
+              <div key={i} className="bg-white rounded-lg shadow-sm p-6 animate-pulse border-l-4 border-gray-200">
                 <div className="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
                 <div className="h-8 bg-gray-200 rounded w-3/4 mb-2"></div>
                 <div className="h-4 bg-gray-200 rounded w-1/3"></div>
@@ -106,12 +110,12 @@ export const Dashboard: React.FC = () => {
             statCards.map((stat, index) => {
               const Icon = stat.icon;
               return (
-                <div key={index} className="card p-6">
+                <div key={index} className={`bg-white rounded-lg shadow-sm p-6 ${stat.borderColor} hover:shadow-md transition-shadow duration-200`}>
                   <div className="flex items-center justify-between">
-                    <div>
+                    <div className="flex-1">
                       <p className="text-sm font-medium text-gray-600">{stat.title}</p>
-                      <p className="text-2xl font-bold text-gray-900 mt-2">{stat.value}</p>
-                      <p className={`text-sm mt-1 flex items-center ${
+                      <p className="text-2xl font-bold text-gray-900 mt-3">{stat.value}</p>
+                      <p className={`text-sm mt-2 flex items-center ${
                         stat.changeType === 'positive' ? 'text-green-600' : 'text-red-600'
                       }`}>
                         {stat.changeType === 'positive' ? (
@@ -122,7 +126,7 @@ export const Dashboard: React.FC = () => {
                         {stat.change} from last month
                       </p>
                     </div>
-                    <div className={`${stat.iconBg} p-4 rounded-lg`}>
+                    <div className={`${stat.iconBg} p-4 rounded-lg flex-shrink-0`}>
                       <Icon className={`w-8 h-8 ${stat.iconColor}`} />
                     </div>
                   </div>
@@ -132,69 +136,69 @@ export const Dashboard: React.FC = () => {
           )}
         </div>
 
-        {/* Quick Stats Row */}
+        {/* System Status and Pending Actions */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* System Status */}
-          <div className="card p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">System Status</h3>
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">System Status</h2>
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                 <div className="flex items-center space-x-3">
-                  <CheckCircle className="w-5 h-5 text-green-600" />
-                  <span className="text-sm text-gray-700">API Server</span>
+                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                  <span className="text-sm font-medium text-gray-700">API Server</span>
                 </div>
                 <span className="text-sm font-medium text-green-600">Operational</span>
               </div>
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                 <div className="flex items-center space-x-3">
-                  <CheckCircle className="w-5 h-5 text-green-600" />
-                  <span className="text-sm text-gray-700">Database</span>
+                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                  <span className="text-sm font-medium text-gray-700">Database</span>
                 </div>
                 <span className="text-sm font-medium text-green-600">Operational</span>
               </div>
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                 <div className="flex items-center space-x-3">
-                  <CheckCircle className="w-5 h-5 text-green-600" />
-                  <span className="text-sm text-gray-700">ML Inference</span>
+                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                  <span className="text-sm font-medium text-gray-700">ML Inference</span>
                 </div>
                 <span className="text-sm font-medium text-green-600">Operational</span>
               </div>
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between p-4 bg-amber-50 rounded-lg border border-amber-200">
                 <div className="flex items-center space-x-3">
-                  <AlertTriangle className="w-5 h-5 text-yellow-600" />
-                  <span className="text-sm text-gray-700">Payment Gateway</span>
+                  <div className="w-3 h-3 bg-amber-500 rounded-full"></div>
+                  <span className="text-sm font-medium text-gray-700">Payment Gateway</span>
                 </div>
-                <span className="text-sm font-medium text-yellow-600">Degraded</span>
+                <span className="text-sm font-medium text-amber-600">Degraded</span>
               </div>
             </div>
           </div>
 
-          {/* Pending Reports */}
-          <div className="card p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Pending Actions</h3>
+          {/* Pending Actions */}
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">Pending Actions</h2>
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
+              <div className="flex items-center justify-between p-4 bg-amber-50 rounded-lg border-l-4 border-amber-500">
                 <div className="flex items-center space-x-3">
-                  <AlertTriangle className="w-5 h-5 text-yellow-600" />
-                  <span className="text-sm text-gray-700">Pending Reports</span>
+                  <AlertTriangle className="w-5 h-5 text-amber-600" />
+                  <span className="text-sm font-medium text-gray-700">Pending Reports</span>
                 </div>
-                <span className="text-lg font-bold text-yellow-600">
+                <span className="text-lg font-bold text-amber-600">
                   {stats?.pending_reports ?? 0}
                 </span>
               </div>
-              <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+              <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
                 <div className="flex items-center space-x-3">
                   <Users className="w-5 h-5 text-blue-600" />
-                  <span className="text-sm text-gray-700">New Users Today</span>
+                  <span className="text-sm font-medium text-gray-700">New Users Today</span>
                 </div>
                 <span className="text-lg font-bold text-blue-600">
                   {stats?.active_today ?? 0}
                 </span>
               </div>
-              <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
+              <div className="flex items-center justify-between p-4 bg-red-50 rounded-lg border-l-4 border-red-500">
                 <div className="flex items-center space-x-3">
                   <Shield className="w-5 h-5 text-red-600" />
-                  <span className="text-sm text-gray-700">Content Blocked Today</span>
+                  <span className="text-sm font-medium text-gray-700">Content Blocked Today</span>
                 </div>
                 <span className="text-lg font-bold text-red-600">
                   {stats?.content_blocked ?? 0}
