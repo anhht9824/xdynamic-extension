@@ -69,16 +69,16 @@ const PaymentConfirmationScreen: React.FC<PaymentConfirmationScreenProps> = ({
   const friendlyFailure = !isSuccess && paymentData.failureReason ? mapFailureReasonText(paymentData.failureReason) : null;
   const friendlyMessage = paymentData.message || (isSuccess ? copy.successMessage : friendlyFailure || copy.failureMessage);
 
-  const badgeColor = isSuccess ? "bg-green-50 text-green-700 border-green-100" : "bg-red-50 text-red-700 border-red-100";
-  const accentColor = isSuccess ? "text-green-600" : "text-red-600";
+  const badgeColor = isSuccess ? "bg-green-500/15 text-green-200 border-green-500/30" : "bg-red-500/15 text-red-200 border-red-500/30";
+  const accentColor = isSuccess ? "text-green-400" : "text-red-400";
 
   return (
-    <div className="w-full bg-gradient-to-b from-slate-50 to-white p-6 sm:p-8 space-y-6">
+    <div className="w-full bg-card text-foreground p-6 sm:p-8 space-y-6 rounded-2xl border border-border shadow-2xl">
       <div className="flex flex-col items-center text-center gap-3">
         <div
-          className={`h-16 w-16 rounded-full border-4 ${isSuccess ? "border-green-100" : "border-red-100"} bg-white shadow-md flex items-center justify-center`}
+          className={`h-16 w-16 rounded-full border-4 ${isSuccess ? "border-green-500/30" : "border-red-500/30"} bg-background shadow-md flex items-center justify-center`}
         >
-          {isSuccess ? <CheckCircle className="w-10 h-10 text-green-600" /> : <XCircle className="w-10 h-10 text-red-600" />}
+          {isSuccess ? <CheckCircle className="w-10 h-10 text-green-400" /> : <XCircle className="w-10 h-10 text-red-400" />}
         </div>
         <span className={`px-3 py-1 text-xs font-semibold rounded-full border ${badgeColor}`}>
           {isSuccess ? copy.stateSuccess : copy.stateFail}
@@ -87,7 +87,7 @@ const PaymentConfirmationScreen: React.FC<PaymentConfirmationScreenProps> = ({
         <p className="text-sm text-muted-foreground max-w-md">{friendlyMessage}</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 rounded-xl border border-slate-100 bg-white shadow-sm p-4">
+      <div className="grid grid-cols-2 gap-4 rounded-xl border border-border bg-card shadow-sm p-4">
         <div className="space-y-1">
           <p className="text-xs uppercase tracking-wider text-muted-foreground">{copy.amount}</p>
           <p className={`text-2xl font-bold ${accentColor}`}>{formatCurrency(paymentData.amount)}</p>
@@ -98,15 +98,15 @@ const PaymentConfirmationScreen: React.FC<PaymentConfirmationScreenProps> = ({
         </div>
       </div>
 
-      <Card className="shadow-sm border border-slate-200">
-        <CardHeader className="p-4 border-b">
+      <Card className="shadow-sm border border-border bg-card">
+        <CardHeader className="p-4 border-b border-border/80 bg-muted/20">
           <CardTitle className="text-base">{copy.details}</CardTitle>
         </CardHeader>
         <CardContent className="p-4 space-y-3 text-sm">
           <DetailRow label={copy.transactionId} value={paymentData.transactionId} valueClass="font-mono text-primary" />
           <DetailRow label={copy.time} value={formatDateTime(paymentData.timestamp)} />
           {paymentData.currentPlan && <DetailRow label={copy.currentPlan} value={paymentData.currentPlan.toUpperCase()} />}
-          {!isSuccess && <DetailRow label={copy.failureReason} value={friendlyFailure || copy.unknownReason} valueClass="text-red-600 font-semibold" />}
+          {!isSuccess && <DetailRow label={copy.failureReason} value={friendlyFailure || copy.unknownReason} valueClass="text-red-400 font-semibold" />}
         </CardContent>
       </Card>
 

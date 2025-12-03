@@ -13,35 +13,35 @@ const softSurface =
 
 const logTone = {
   error: {
-    bg: "bg-[#fef2f2]",
-    border: "border-red-200",
-    text: "text-red-800",
-    pill: "bg-red-100 text-red-700",
-    icon: "text-red-600",
+    bg: "bg-[#fef2f2] dark:bg-red-950/40",
+    border: "border-red-200 dark:border-red-800/60",
+    text: "text-red-800 dark:text-red-100",
+    pill: "bg-red-100 text-red-700 dark:bg-red-900/60 dark:text-red-200",
+    icon: "text-red-600 dark:text-red-200",
     Icon: AlertCircle,
   },
   warning: {
-    bg: "bg-amber-50",
-    border: "border-amber-200",
-    text: "text-amber-800",
-    pill: "bg-amber-100 text-amber-700",
-    icon: "text-amber-600",
+    bg: "bg-amber-50 dark:bg-amber-950/40",
+    border: "border-amber-200 dark:border-amber-800/60",
+    text: "text-amber-800 dark:text-amber-100",
+    pill: "bg-amber-100 text-amber-700 dark:bg-amber-900/60 dark:text-amber-200",
+    icon: "text-amber-600 dark:text-amber-200",
     Icon: AlertTriangle,
   },
   info: {
-    bg: "bg-blue-50",
-    border: "border-blue-200",
-    text: "text-blue-800",
-    pill: "bg-blue-100 text-blue-700",
-    icon: "text-blue-600",
+    bg: "bg-blue-50 dark:bg-blue-950/40",
+    border: "border-blue-200 dark:border-blue-800/60",
+    text: "text-blue-800 dark:text-blue-100",
+    pill: "bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-200",
+    icon: "text-blue-600 dark:text-blue-200",
     Icon: Info,
   },
   debug: {
-    bg: "bg-slate-50",
-    border: "border-slate-200",
-    text: "text-slate-800",
-    pill: "bg-slate-100 text-slate-700",
-    icon: "text-slate-600",
+    bg: "bg-slate-50 dark:bg-slate-900/50",
+    border: "border-slate-200 dark:border-slate-800/60",
+    text: "text-slate-800 dark:text-slate-100",
+    pill: "bg-slate-100 text-slate-700 dark:bg-slate-900/60 dark:text-slate-200",
+    icon: "text-slate-600 dark:text-slate-200",
     Icon: Info,
   },
 } as const;
@@ -353,7 +353,7 @@ const AdvancedTab: React.FC<AdvancedTabProps> = ({
             />
             <button
               onClick={handleAddFilter}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
+              className="px-4 py-2 rounded-lg font-semibold transition-colors bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm shadow-primary/20"
               aria-label={text.filters.add}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -368,7 +368,7 @@ const AdvancedTab: React.FC<AdvancedTabProps> = ({
                 <span className="font-mono text-sm text-gray-900 dark:text-white">{filter}</span>
                 <button
                   onClick={() => handleRemoveFilter(filter)}
-                  className="p-1 text-red-600 hover:bg-red-100 dark:hover:bg-red-900 rounded transition-colors"
+                  className="p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/40 rounded transition-colors"
                   aria-label="Remove filter"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -390,7 +390,7 @@ const AdvancedTab: React.FC<AdvancedTabProps> = ({
                 <button
                   onClick={() => onExportSettings("json")}
                   disabled={isLoading.exporting}
-                  className="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-3 py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm shadow-primary/25"
                 >
                   {isLoading.exporting ? (
                     <>
@@ -407,7 +407,7 @@ const AdvancedTab: React.FC<AdvancedTabProps> = ({
                 <button
                   onClick={() => onExportSettings("csv")}
                   disabled={isLoading.exporting}
-                  className="flex-1 px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-3 py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-secondary text-foreground hover:bg-secondary/90 shadow-sm shadow-secondary/30"
                 >
                   {isLoading.exporting ? (
                     <>
@@ -429,7 +429,9 @@ const AdvancedTab: React.FC<AdvancedTabProps> = ({
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{text.importExport.importDesc}</p>
               <label
                 className={`block w-full px-3 py-2 rounded-lg transition-colors text-sm font-medium text-center cursor-pointer ${
-                  isLoading.importing ? "bg-gray-400 text-white cursor-not-allowed" : "bg-purple-600 hover:bg-purple-700 text-white"
+                  isLoading.importing
+                    ? "bg-muted text-muted-foreground cursor-not-allowed"
+                    : "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm shadow-primary/20"
                 }`}
               >
                 <input
@@ -468,10 +470,10 @@ const AdvancedTab: React.FC<AdvancedTabProps> = ({
                 key={level}
                 onClick={() => setLogLevel(level)}
                 className={clsx(
-                  "px-3 py-1 rounded-full text-sm font-medium border transition-colors",
+                  "px-3 py-1 rounded-full text-sm font-semibold border transition-colors",
                   logLevel === level
-                    ? "border-blue-200 bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:border-blue-700"
-                    : "border-slate-200 bg-white text-slate-700 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200"
+                    ? "border-primary/40 bg-primary/10 text-primary shadow-sm"
+                    : "border-border bg-card text-muted-foreground hover:border-primary/40 hover:text-foreground"
                 )}
               >
                 {text.logs.filters[idx]}

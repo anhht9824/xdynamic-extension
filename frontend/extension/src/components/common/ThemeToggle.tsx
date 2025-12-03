@@ -1,5 +1,5 @@
 import React from "react";
-import { Sun, Moon, Monitor } from "lucide-react";
+import { Sun, Moon } from "lucide-react";
 import { useThemeContext } from "../../providers/ThemeProvider";
 import { useLanguageContext } from "../../providers/LanguageProvider";
 import { GlassButton } from "../ui/GlassButton";
@@ -20,7 +20,6 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({
   const { t } = useLanguageContext();
 
   const getThemeIcon = () => {
-    if (theme === "system") return <Monitor className="h-4 w-4" />;
     return resolvedTheme === "light" ? (
       <Sun className="h-4 w-4" />
     ) : (
@@ -34,10 +33,8 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({
         return t("theme.light", "Light");
       case "dark":
         return t("theme.dark", "Dark");
-      case "system":
-        return t("theme.system", "System");
       default:
-        return t("theme.system", "System");
+        return t("theme.light", "Light");
     }
   };
 
@@ -52,7 +49,6 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({
         >
           <option value="light">{t("theme.light", "Light")}</option>
           <option value="dark">{t("theme.dark", "Dark")}</option>
-          <option value="system">{t("theme.system", "System")}</option>
         </select>
       </div>
     );
@@ -60,7 +56,7 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({
 
   if (variant === "cycle") {
     const cycleTheme = () => {
-      const themes = ["light", "dark", "system"] as const;
+      const themes = ["light", "dark"] as const;
       const currentIndex = themes.indexOf(theme);
       const nextIndex = (currentIndex + 1) % themes.length;
       changeTheme(themes[nextIndex]);

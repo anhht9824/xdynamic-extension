@@ -43,13 +43,16 @@ const Header: React.FC<HeaderProps> = ({ onLoginClick, onProfileClick }) => {
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
             className="border-none bg-transparent p-0 cursor-pointer"
+            aria-label={t("common.profile", "Profile")}
+            title={t("common.profile", "Profile")}
           >
             <ProfileIcon variant={isHovered ? "active" : "default"} />
           </button>
           <button
             onClick={handleLogout}
             className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors text-gray-500"
-            title={t("auth.logout", "Đăng xuất")}
+            title={t("auth.logout", "Logout")}
+            aria-label={t("auth.logout", "Logout")}
           >
             <LogoutIcon className="w-5 h-5" />
           </button>

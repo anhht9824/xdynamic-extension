@@ -19,11 +19,13 @@ import { DEFAULTS, EXTERNAL_LINKS, logger, navigateToPage, navigateToPageInCurre
 import { userService } from "../services/user.service";
 import { authService } from "../services/auth.service";
 import { readFromStorage, writeToStorage } from "../core/storage";
+import { useLanguageContext } from "../providers/LanguageProvider";
 
 type UserHubTab = "dashboard" | "overview" | "account" | "advanced";
 const ACTIVE_TAB_STORAGE_KEY = "xdynamic-userhub-tab";
 
 const UserHub: React.FC = () => {
+  const { language } = useLanguageContext();
   // Initialize active tab from URL hash or default to "dashboard"
   const getInitialTab = (): UserHubTab => {
     const validTabs = ['dashboard', 'overview', 'account', 'advanced'];
@@ -681,14 +683,14 @@ const UserHub: React.FC = () => {
       <div className="flex-1 flex flex-col min-h-screen">
         {/* Top Header with Profile & Search */}
         {/* Top Header with Profile & Search */}
-        <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-border">
+        <header className="sticky top-0 z-40 bg-card/95 backdrop-blur border-b border-border">
           {/* Profile Section - Minimalist */}
           <div className="px-4 sm:px-6 py-4">
             <div className="max-w-6xl mx-auto">
               {/* Mobile Menu Button */}
               <button
                 onClick={() => setIsMobileMenuOpen(true)}
-                className="lg:hidden mb-4 p-2 text-muted-foreground hover:bg-gray-100 rounded-lg transition-colors"
+                className="lg:hidden mb-4 p-2 text-muted-foreground hover:bg-muted rounded-lg transition-colors"
                 aria-label="Mở menu"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -700,7 +702,7 @@ const UserHub: React.FC = () => {
                 <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4">
                   {/* Avatar */}
                   <div className="relative group">
-                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gray-100 border border-gray-200 p-0.5 shadow-sm overflow-hidden">
+                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-muted border border-border p-0.5 shadow-sm overflow-hidden">
                       {userProfile.avatar ? (
                         <img
                           src={userProfile.avatar}
@@ -715,7 +717,7 @@ const UserHub: React.FC = () => {
                     </div>
                     <button
                       onClick={handleEditProfile}
-                      className="absolute bottom-0 right-0 w-5 h-5 bg-white text-primary border border-gray-200 rounded-full shadow-sm flex items-center justify-center hover:bg-gray-50 transition-colors opacity-0 group-hover:opacity-100"
+                    className="absolute bottom-0 right-0 w-5 h-5 bg-card text-primary border border-border rounded-full shadow-sm flex items-center justify-center hover:bg-primary/10 transition-colors opacity-0 group-hover:opacity-100"
                       aria-label="Chỉnh sửa avatar"
                     >
                       <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -730,7 +732,7 @@ const UserHub: React.FC = () => {
                       <h2 className="text-lg sm:text-xl font-bold text-foreground">{userProfile.fullName}</h2>
                       <button
                         onClick={handleEditProfile}
-                        className="p-1 text-muted-foreground hover:text-primary hover:bg-gray-100 rounded transition-colors"
+                        className="p-1 text-muted-foreground hover:text-primary hover:bg-muted rounded transition-colors"
                         aria-label="Chỉnh sửa hồ sơ"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -752,7 +754,7 @@ const UserHub: React.FC = () => {
                   {userProfile.isAdmin && (
                     <button
                       onClick={handleOpenAdminDashboard}
-                      className="w-full sm:w-auto px-4 py-2 bg-white border border-gray-200 hover:bg-gray-50 text-foreground rounded-full transition-colors flex items-center justify-center space-x-2 text-sm font-medium shadow-sm"
+                    className="w-full sm:w-auto px-4 py-2 rounded-full border border-border bg-card text-foreground hover:border-primary/50 hover:text-primary transition-colors flex items-center justify-center space-x-2 text-sm font-medium shadow-sm"
                     >
                       <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6l8 4v4c0 4-4 7-8 8-4-1-8-4-8-8v-4l8-4z" />
@@ -763,21 +765,21 @@ const UserHub: React.FC = () => {
                   )}
                   <button
                     onClick={handleUpgrade}
-                    className="w-full sm:w-auto px-4 py-2 bg-primary hover:bg-blue-700 text-white rounded-full transition-colors flex items-center justify-center space-x-2 text-sm font-medium shadow-md shadow-blue-900/10"
+                    className="w-full sm:w-auto px-4 py-2 bg-primary border border-primary/50 hover:bg-primary/90 text-primary-foreground rounded-full transition-colors flex items-center justify-center space-x-2 text-sm font-semibold shadow-sm shadow-primary/25"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
-                    <span>Nâng cấp</span>
+                    <span>{language === "vi" ? "Nâng cấp" : "Upgrade"}</span>
                   </button>
                   <button
                     onClick={handleLogout}
-                    className="w-full sm:w-auto px-4 py-2 bg-white border border-gray-200 hover:bg-gray-50 text-muted-foreground hover:text-red-600 rounded-full transition-colors flex items-center justify-center space-x-2 text-sm font-medium shadow-sm"
+                    className="w-full sm:w-auto px-4 py-2 bg-card border border-border hover:border-destructive/50 text-muted-foreground hover:text-destructive rounded-full transition-colors flex items-center justify-center space-x-2 text-sm font-medium shadow-sm"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                     </svg>
-                    <span>Đăng xuất</span>
+                    <span>{language === "vi" ? "Đăng xuất" : "Logout"}</span>
                   </button>
                 </div>
               </div>
@@ -785,7 +787,7 @@ const UserHub: React.FC = () => {
           </div>
 
           {/* Search & Breadcrumb Bar */}
-          <div className="bg-white/50 backdrop-blur-sm border-b border-border/50">
+          <div className="bg-card/80 backdrop-blur border-b border-border/50">
             <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
 

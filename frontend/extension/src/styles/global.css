@@ -23,7 +23,8 @@ body.popup {
   width: 320px;
   height: 460px;
   overflow: visible !important; /* Don't clip rounded corners */
-  background: transparent;
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
 }
 
 body.popup #popup-root {
@@ -63,7 +64,9 @@ body.settings {
   margin: 0;
   padding: 0;
   overflow-x: hidden;
-  background: #f9fafb;
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  transition: background-color 200ms ease, color 200ms ease;
 }
 
 body.settings #settings-root {

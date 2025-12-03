@@ -4,25 +4,25 @@
 
 @layer base {
   :root {
-    --background: 210 20% 98%; /* Gray 50 - #F9FAFB */
-    --foreground: 222.2 84% 4.9%;
+    --background: 218 33% 97%; /* Soft gray-blue */
+    --foreground: 222 47% 12%; /* Ink */
     --card: 0 0% 100%; /* White - #FFFFFF */
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 222 47% 12%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221 83% 53%; /* Blue 700 - #1D4ED8 */
+    --popover-foreground: 222 47% 12%;
+    --primary: 221 83% 55%; /* #2563EB */
     --primary-foreground: 210 40% 98%;
-    --secondary: 186 89% 43%; /* Cyan 500 - #06B6D4 */
-    --secondary-foreground: 222.2 84% 4.9%;
-    --muted: 210 40% 96%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96%;
-    --accent-foreground: 222.2 84% 4.9%;
+    --secondary: 199 84% 55%; /* #0EA5E9 */
+    --secondary-foreground: 222 47% 12%;
+    --muted: 214 32% 94%; /* #E2E8F0 */
+    --muted-foreground: 215 17% 46%; /* #64748B */
+    --accent: 214 32% 94%;
+    --accent-foreground: 222 47% 12%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
+    --border: 220 20% 88%; /* #E2E8F0 */
+    --input: 220 20% 88%;
+    --ring: 221 83% 55%;
     --radius: 0.5rem;
     /* Glass-specific variables */
     --glass-bg-primary: rgba(255, 255, 255, 0.1);
@@ -32,39 +32,45 @@
     --glass-blur: blur(12px);
     /* Animation variables */
     --animate-spin: spin 1s linear infinite;
+    color-scheme: light;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 221 83% 53%; /* Blue 700 - #1D4ED8 */
-    --primary-foreground: 222.2 84% 4.9%;
-    --secondary: 186 89% 43%; /* Cyan 500 - #06B6D4 */
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    /* Dark mode palette tuned for higher contrast and softer surfaces */
+    --background: 226 44% 10%; /* #0B1021 */
+    --foreground: 220 18% 92%; /* #E6EAF3 */
+    --card: 223 36% 13%; /* #111A2D */
+    --card-foreground: 220 18% 92%;
+    --popover: 223 36% 13%;
+    --popover-foreground: 220 18% 92%;
+    --primary: 220 90% 70%; /* #5DA8FF */
+    --primary-foreground: 223 44% 12%; /* #0B1021 */
+    --secondary: 199 88% 66%; /* #46C9F8 */
+    --secondary-foreground: 223 44% 12%;
+    --muted: 220 23% 20%; /* #1A2438 */
+    --muted-foreground: 219 18% 70%; /* #9FB2D0 */
+    --accent: 220 27% 24%; /* #1F2B44 */
+    --accent-foreground: 220 18% 92%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 94.1%;
+    --border: 220 27% 26%; /* #24304A */
+    --input: 220 27% 26%;
+    --ring: 220 90% 70%;
     /* Glass-specific variables for dark mode */
-    --glass-bg-primary: rgba(0, 0, 0, 0.2);
-    --glass-bg-secondary: rgba(0, 0, 0, 0.3);
-    --glass-bg-heavy: rgba(0, 0, 0, 0.4);
-    --glass-border: rgba(255, 255, 255, 0.1);
+    --glass-bg-primary: rgba(17, 26, 45, 0.45);
+    --glass-bg-secondary: rgba(17, 26, 45, 0.58);
+    --glass-bg-heavy: rgba(17, 26, 45, 0.68);
+    --glass-border: rgba(255, 255, 255, 0.14);
+    color-scheme: dark;
   }
 }
 
 @layer base {
   * {
     @apply border-border;
+  }
+  html {
+    background-color: hsl(var(--background));
   }
   body {
     @apply bg-background text-foreground;

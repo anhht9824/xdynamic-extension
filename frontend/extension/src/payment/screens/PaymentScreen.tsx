@@ -124,13 +124,13 @@ const PaymentScreen: React.FC<PaymentScreenProps> = ({
         );
       case "bank-transfer":
         return (
-          <svg className="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <svg className="w-6 h-6 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
           </svg>
         );
       default:
         return (
-          <svg className="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <svg className="w-6 h-6 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8v8m0-8H9m3 0h3m-3 4H9m3 0h3m-3 4H9m3 0h3" />
           </svg>
         );
@@ -138,15 +138,15 @@ const PaymentScreen: React.FC<PaymentScreenProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <Card className="max-w-2xl mx-auto shadow-lg">
-        <CardHeader className="border-b p-4 sm:p-6 flex flex-row items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <Button variant="ghost" size="icon" onClick={onBack}>
+    <div className="min-h-screen bg-background text-foreground py-10 px-4 sm:px-6">
+      <Card className="max-w-5xl mx-auto shadow-2xl border border-border/70 bg-card">
+        <CardHeader className="border-b border-border/70 bg-muted/30 p-4 sm:p-6 flex flex-row items-center justify-between gap-4 space-y-0">
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="icon" onClick={onBack} className="hover:bg-accent hover:text-foreground">
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>
-              <CardTitle className="text-xl font-bold">{copy.title}</CardTitle>
+              <CardTitle className="text-xl font-bold text-foreground">{copy.title}</CardTitle>
               <p className="text-sm text-muted-foreground">{copy.subtitle}</p>
             </div>
           </div>
@@ -154,20 +154,20 @@ const PaymentScreen: React.FC<PaymentScreenProps> = ({
 
         <CardContent className="p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
-            <Card className="shadow-none border">
-              <CardHeader>
-                <CardTitle className="text-lg">{copy.pickAmount}</CardTitle>
+            <Card className="shadow-none border border-border/70 bg-card">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg text-foreground">{copy.pickAmount}</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-3 gap-3 mb-4">
+                <div className="grid grid-cols-3 gap-3 mb-5">
                   {[50000, 100000, 200000, 500000, 1000000, 2000000].map((val) => (
                     <button
                       key={val}
                       onClick={() => setAmount(val)}
-                      className={`py-3 px-2 rounded-lg border text-sm font-medium transition-colors text-center ${
+                      className={`py-3 px-2 rounded-lg border text-sm font-medium transition-colors text-center focus:outline-none focus:ring-2 focus:ring-primary/40 ${
                         amount === val
-                          ? "bg-primary/10 border-primary text-primary font-semibold"
-                          : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
+                          ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                          : "bg-card border-border text-foreground hover:bg-accent"
                       }`}
                     >
                       {formatCurrency(val)}
@@ -195,9 +195,9 @@ const PaymentScreen: React.FC<PaymentScreenProps> = ({
               </CardContent>
             </Card>
 
-            <Card className="shadow-none border">
-              <CardHeader>
-                <CardTitle className="text-lg">{copy.methodTitle}</CardTitle>
+            <Card className="shadow-none border border-border/70 bg-card">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg text-foreground">{copy.methodTitle}</CardTitle>
               </CardHeader>
               <CardContent>
                 <RadioGroup
@@ -207,26 +207,31 @@ const PaymentScreen: React.FC<PaymentScreenProps> = ({
                 >
                   <Label
                     htmlFor="momo"
-                    className={`flex items-center justify-between p-4 border rounded-lg cursor-pointer transition-colors ${
-                      selectedMethod === "momo" ? "border-primary ring-2 ring-primary/50" : "border-gray-200 hover:bg-gray-50"
+                    className={`flex items-center justify-between p-4 border rounded-lg cursor-pointer transition-colors bg-card ${
+                      selectedMethod === "momo"
+                        ? "border-primary bg-primary/10 ring-2 ring-primary/50 shadow-sm"
+                        : "border-border hover:bg-accent"
                     }`}
                   >
                     <div className="flex items-center space-x-3">
                       {getMethodIcon("momo")}
                       <div>
-                        <p className="font-medium text-gray-900">{copy.momoTitle}</p>
+                        <p className="font-medium text-foreground">{copy.momoTitle}</p>
                         <p className="text-sm text-muted-foreground">{copy.momoDesc}</p>
                       </div>
                     </div>
                     <RadioGroupItem value="momo" id="momo" className="h-5 w-5" />
                   </Label>
 
-                  <Label htmlFor="bank-transfer" className="flex items-center justify-between p-4 border rounded-lg opacity-50 cursor-not-allowed">
+                  <Label
+                    htmlFor="bank-transfer"
+                    className="flex items-center justify-between p-4 border rounded-lg bg-muted text-muted-foreground opacity-70 cursor-not-allowed border-border/60"
+                  >
                     <div className="flex items-center space-x-3">
                       {getMethodIcon("bank-transfer")}
                       <div>
-                        <p className="font-medium text-gray-900">{copy.bankTitle}</p>
-                        <p className="text-sm text-muted-foreground">{copy.bankDesc}</p>
+                        <p className="font-medium">{copy.bankTitle}</p>
+                        <p className="text-sm">{copy.bankDesc}</p>
                       </div>
                     </div>
                     <RadioGroupItem value="bank-transfer" id="bank-transfer" disabled className="h-5 w-5" />
@@ -237,24 +242,28 @@ const PaymentScreen: React.FC<PaymentScreenProps> = ({
           </div>
 
           <div className="lg:col-span-1 space-y-6">
-            <Card className="shadow-none border sticky top-4">
-              <CardHeader>
-                <CardTitle className="text-lg">{copy.orderSummary}</CardTitle>
+            <Card className="shadow-none border border-border/70 bg-card sticky top-4">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg text-foreground">{copy.orderSummary}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">{copy.topupAmount}</span>
-                  <span className="font-medium">{formatCurrency(amount)}</span>
+                  <span className="font-semibold text-foreground">{formatCurrency(amount)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">{copy.fee}</span>
-                  <span className="font-medium">0 VND</span>
+                  <span className="font-semibold text-foreground">0 VND</span>
                 </div>
-                <div className="border-t pt-4 flex justify-between text-lg font-bold">
+                <div className="border-t border-border/70 pt-4 flex justify-between text-lg font-bold">
                   <span>{copy.total}</span>
                   <span className="text-primary">{formatCurrency(amount)}</span>
                 </div>
-                <Button onClick={handlePayment} disabled={isProcessing || amount < 10000} className="w-full py-3 text-base font-semibold">
+                <Button
+                  onClick={handlePayment}
+                  disabled={isProcessing || amount < 10000}
+                  className="w-full py-3 text-base font-semibold shadow-md shadow-primary/25"
+                >
                   {isProcessing ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />

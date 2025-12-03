@@ -1,6 +1,8 @@
 import React from "react";
+import { Moon, Sun } from "lucide-react";
 import { useLanguageContext } from "../../providers/LanguageProvider";
 import { useThemeContext } from "../../providers/ThemeProvider";
+import { Language, Theme } from "../../types";
 
 export type SettingsSection =
   | "dashboard"
@@ -57,8 +59,14 @@ const copy: Record<
     title: string;
     closeMenu: string;
     sections: Record<SettingsSection, { label: string; description: string }>;
-    language: { title: string; description: string; vi: string; en: string };
-    theme: { title: string; description: string; on: string; off: string };
+    language: { title: string; description: string; helper: string; vi: string; en: string };
+    theme: {
+      title: string;
+      description: string;
+      note: string;
+      options: { light: string; dark: string };
+      preview: { light: string; dark: string };
+    };
     help: { title: string; body: string; cta: string };
   }
 > = {
@@ -73,15 +81,20 @@ const copy: Record<
     },
     language: {
       title: "Thay đổi ngôn ngữ",
-      description: "Đồng bộ với popup và Dashboard",
+      description: "Đồng bộ Popup & Dashboard",
+      helper: "Đồng bộ ngôn ngữ giữa Popup, Dashboard và các tab sử dụng chung.",
       vi: "Tiếng Việt",
       en: "English",
     },
     theme: {
-      title: "Chế độ tối",
-      description: "Áp dụng giao diện tối cho Dashboard",
-      on: "Đang bật",
-      off: "Đang tắt",
+      title: "Chế độ giao diện",
+      description: "Áp dụng cho Dashboard/User Hub",
+      note: "Theme chỉ áp dụng cho Dashboard và các tab có giao diện này.",
+      options: { light: "Light", dark: "Dark" },
+      preview: {
+        light: "Ưu tiên Light",
+        dark: "Ưu tiên Dark",
+      },
     },
     help: {
       title: "Cần trợ giúp?",
@@ -100,15 +113,20 @@ const copy: Record<
     },
     language: {
       title: "Language",
-      description: "Syncs with popup and Dashboard",
+      description: "Syncs with popup & dashboard",
+      helper: "Selection stays aligned across Popup, Dashboard and related tabs.",
       vi: "Vietnamese",
       en: "English",
     },
     theme: {
-      title: "Dark mode",
-      description: "Switch theme for the Dashboard",
-      on: "On",
-      off: "Off",
+      title: "Theme",
+      description: "Applies to Dashboard/User Hub",
+      note: "Theme changes only affect the Dashboard and shared tabs. Popup stays unchanged.",
+      options: { light: "Light", dark: "Dark" },
+      preview: {
+        light: "Using Light",
+        dark: "Using Dark",
+      },
     },
     help: {
       title: "Need help?",
@@ -118,6 +136,73 @@ const copy: Record<
   },
 } as const;
 
+type SegmentedOption<T extends string> = {
+  value: T;
+  label: string;
+  description?: string;
+  icon?: React.ReactNode;
+};
+
+interface SegmentedControlProps<T extends string> {
+  ariaLabel: string;
+  value: T;
+  options: SegmentedOption<T>[];
+  onChange: (value: T) => void;
+  columns?: string;
+}
+
+function SegmentedControl<T extends string>({
+  ariaLabel,
+  value,
+  options,
+  onChange,
+  columns = "grid-cols-2",
+}: SegmentedControlProps<T>) {
+  return (
+    <div className={`grid ${columns} gap-2`} role="radiogroup" aria-label={ariaLabel}>
+      {options.map((option) => {
+        const isActive = option.value === value;
+        return (
+          <button
+            key={option.value}
+            type="button"
+            onClick={() => onChange(option.value)}
+            className={`
+              flex items-center gap-3 rounded-xl border px-3 py-2.5 text-left
+              transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50
+              ${
+                isActive
+                  ? "bg-gradient-to-r from-primary/10 via-primary/5 to-secondary/10 border-primary/40 text-primary shadow-sm ring-1 ring-primary/30"
+                  : "border-border bg-card/80 text-muted-foreground hover:border-primary/40 hover:text-foreground"
+              }
+            `}
+            role="radio"
+            aria-checked={isActive}
+          >
+            {option.icon && (
+              <span
+                className={`flex-shrink-0 ${
+                  isActive ? "text-primary" : "text-muted-foreground"
+                }`}
+              >
+                {option.icon}
+              </span>
+            )}
+            <div className="flex min-w-0 flex-col">
+              <span className="truncate text-sm font-semibold">{option.label}</span>
+              {option.description && (
+                <span className="truncate text-[11px] text-muted-foreground">
+                  {option.description}
+                </span>
+              )}
+            </div>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
   activeSection,
   onSectionChange,
@@ -125,17 +210,12 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
   onCloseMobileMenu,
 }) => {
   const { language, changeLanguage } = useLanguageContext();
-  const { resolvedTheme, changeTheme } = useThemeContext();
+  const { theme, resolvedTheme, changeTheme } = useThemeContext();
   const text = copy[language];
-  const isDark = resolvedTheme === "dark";
 
   const handleSectionClick = (section: SettingsSection) => {
     onSectionChange(section);
     onCloseMobileMenu?.();
-  };
-
-  const handleDarkToggle = () => {
-    changeTheme(isDark ? "light" : "dark");
   };
 
   const cardBase = "bg-card/90 border-r border-border shadow-sm backdrop-blur";
@@ -153,7 +233,7 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
       <aside
         className={`
           fixed lg:sticky top-0 left-0 z-50
-          w-64 h-screen
+          w-72 min-w-72 h-screen flex flex-col
           ${cardBase}
           transform transition-transform duration-300 ease-in-out
           ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"}
@@ -244,78 +324,7 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
           })}
         </nav>
 
-        <div className="p-4 space-y-4 border-t border-border bg-card/90">
-          <div>
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold text-foreground">{text.language.title}</p>
-              <span className="text-xs text-muted-foreground">
-                {language === "vi" ? text.language.vi : text.language.en}
-              </span>
-            </div>
-            <p className="mt-1 text-xs text-muted-foreground">{text.language.description}</p>
-            <div className="mt-2 grid grid-cols-2 gap-2">
-              <button
-                onClick={() => changeLanguage("vi")}
-                className={`rounded-lg border px-3 py-2 text-sm font-semibold transition ${
-                  language === "vi"
-                    ? "border-primary bg-primary/10 text-primary shadow-sm"
-                    : "border-border bg-card text-foreground hover:border-primary/50"
-                }`}
-              >
-                {text.language.vi}
-              </button>
-              <button
-                onClick={() => changeLanguage("en")}
-                className={`rounded-lg border px-3 py-2 text-sm font-semibold transition ${
-                  language === "en"
-                    ? "border-primary bg-primary/10 text-primary shadow-sm"
-                    : "border-border bg-card text-foreground hover:border-primary/50"
-                }`}
-              >
-                {text.language.en}
-              </button>
-            </div>
-          </div>
-
-          <div className="space-y-2 rounded-lg border border-border bg-muted/40 p-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
-                  />
-                </svg>
-                <span>{text.theme.title}</span>
-              </div>
-              <span className="text-xs font-semibold text-muted-foreground">
-                {isDark ? text.theme.on : text.theme.off}
-              </span>
-            </div>
-            <button
-              onClick={handleDarkToggle}
-              className={`flex items-center justify-between rounded-lg border px-3 py-2 text-sm font-medium transition ${
-                isDark
-                  ? "border-primary bg-primary/10 text-primary shadow-sm"
-                  : "border-border bg-card text-foreground hover:border-primary/50"
-              }`}
-            >
-              <span>{isDark ? text.theme.off : text.theme.on}</span>
-              <span className="inline-flex h-5 w-10 items-center rounded-full bg-muted">
-                <span
-                  className={`h-4 w-4 rounded-full bg-primary transition-transform ${
-                    isDark ? "translate-x-5" : "translate-x-1"
-                  }`}
-                />
-              </span>
-            </button>
-            <p className="text-xs text-muted-foreground">{text.theme.description}</p>
-          </div>
-        </div>
-
-        <div className="sticky bottom-0 p-4 border-t border-border bg-card">
+        <div className="mt-auto p-4 space-y-4 border-t border-border bg-card">
           <div className="bg-primary/5 rounded-lg p-3">
             <div className="flex items-center gap-2 mb-2">
               <svg
@@ -338,6 +347,58 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
               {text.help.cta}
             </button>
           </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 21a9 9 0 100-18 9 9 0 000 18z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M2.458 12C3.732 7.943 7.522 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.478 0-8.268-2.943-9.542-7z"
+                    />
+                  </svg>
+                </span>
+                <div>
+                  <p className="text-sm font-semibold text-foreground">{text.language.title}</p>
+                </div>
+              </div>
+            </div>
+            <SegmentedControl<Language>
+              ariaLabel={text.language.title}
+              value={language}
+              options={[
+                { value: "en", label: text.language.en },
+                { value: "vi", label: text.language.vi },
+              ]}
+              onChange={changeLanguage}
+            />
+          </div>
+
+          <button
+            onClick={() => changeTheme(resolvedTheme === "light" ? "dark" : "light")}
+            className="flex w-full items-center justify-between rounded-xl border border-border bg-muted/40 px-3 py-2 text-sm font-semibold text-foreground transition hover:border-primary/50 hover:text-primary"
+          >
+            <div className="flex items-center gap-2">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
+                {resolvedTheme === "light" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              </span>
+              <div className="flex flex-col">
+                <span>{text.theme.title}</span>
+              </div>
+            </div>
+            <span className="rounded-full border border-border bg-card px-2 py-1 text-[11px] font-semibold text-muted-foreground">
+              {resolvedTheme === "light" ? text.theme.options.light : text.theme.options.dark}
+            </span>
+          </button>
         </div>
       </aside>
     </>

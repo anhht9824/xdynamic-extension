@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { MoreHorizontal, Rocket } from "lucide-react";
 import { UserProfile, SettingsTab } from "../../types/common";
 import { ConfirmationModal } from "../../components/common";
+import { useLanguageContext } from "../../providers/LanguageProvider";
 
 interface ProfileHeaderProps {
   profile: UserProfile;
@@ -19,6 +20,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   onTabChange,
 }) => {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const { language } = useLanguageContext();
 
   const handleLogoutClick = () => {
     setShowLogoutConfirm(true);
@@ -32,12 +34,26 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   const getPlanBadgeColor = (planType: string) => {
     switch (planType) {
       case "pro":
-        return "bg-gradient-to-r from-purple-500 to-purple-700 text-white";
+        return "bg-gradient-to-r from-purple-500 to-indigo-600 text-white shadow-sm shadow-purple-900/20";
       case "plus":
-        return "bg-gradient-to-r from-blue-500 to-blue-700 text-white";
+        return "bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-sm shadow-blue-900/20";
       default:
-        return "bg-gray-200 text-gray-700";
+        return "bg-slate-200 text-slate-700 dark:bg-slate-700/50 dark:text-slate-100";
     }
+  };
+
+  const getPlanLabel = (planType: string, fallback?: string) => {
+    const labels: Record<string, { en: string; vi: string }> = {
+      free: { en: "Free", vi: "Miễn phí" },
+      plus: { en: "Plus", vi: "Plus" },
+      pro: { en: "Pro", vi: "Pro" },
+      premium: { en: "Premium", vi: "Premium" },
+    };
+    const entry = labels[planType?.toLowerCase?.() || ""] || undefined;
+    if (entry) {
+      return language === "vi" ? entry.vi : entry.en;
+    }
+    return fallback || (language === "vi" ? "Không xác định" : "Unknown");
   };
 
   const tabs: { id: SettingsTab; label: string; icon: string }[] = [
@@ -87,8 +103,11 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                   </button>
                 </div>
                 <p className="text-blue-100 mb-2 text-sm sm:text-base break-all sm:break-normal">{profile.email}</p>
-                <span className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${getPlanBadgeColor(profile.planType)}`}>
-                  {profile.plan}
+                <span
+                  className={`inline-block px-3 py-1 rounded-full text-sm font-semibold border border-white/10 ${getPlanBadgeColor(profile.planType)}`}
+                  title={language === "vi" ? "Gói hiện tại" : "Current plan"}
+                >
+                  {getPlanLabel(profile.planType, profile.plan)}
                 </span>
               </div>
             </div>

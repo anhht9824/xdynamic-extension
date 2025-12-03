@@ -210,16 +210,16 @@ const copy: Record<Language, DashboardCopy> = {
 
 const activityStyles = [
   {
-    icon: <Ban className="h-5 w-5 text-red-600" />,
-    container: "bg-red-50",
+    icon: <Ban className="h-5 w-5 text-red-500 dark:text-red-200" />,
+    container: "bg-red-50 dark:bg-red-950/40 border border-red-100 dark:border-red-800/60",
   },
   {
-    icon: <Gauge className="h-5 w-5 text-amber-600" />,
-    container: "bg-amber-50",
+    icon: <Gauge className="h-5 w-5 text-amber-500 dark:text-amber-200" />,
+    container: "bg-amber-50 dark:bg-amber-950/40 border border-amber-100 dark:border-amber-800/60",
   },
   {
-    icon: <Sparkles className="h-5 w-5 text-emerald-600" />,
-    container: "bg-emerald-50",
+    icon: <Sparkles className="h-5 w-5 text-emerald-500 dark:text-emerald-200" />,
+    container: "bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-800/60",
   },
 ];
 
@@ -422,7 +422,12 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
             </div>
             <div className="space-y-4">
               {text.activity.items.map((item, index) => (
-                <div key={item.title} className={`flex items-start gap-3 rounded-lg p-4 ${activityStyles[index]?.container || "bg-slate-50"}`}>
+                <div
+                  key={item.title}
+                  className={`flex items-start gap-3 rounded-lg p-4 ${
+                    activityStyles[index]?.container || "bg-card border border-border"
+                  }`}
+                >
                   {activityStyles[index]?.icon}
                   <div className="space-y-1">
                     <p className="text-sm font-semibold text-foreground">{item.title}</p>
@@ -441,9 +446,9 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
               <span className="text-xs font-semibold text-primary">{text.quick.badge}</span>
             </div>
 
-            <div className="mb-4 rounded-xl border border-purple-200 bg-gradient-to-br from-purple-50 to-blue-50 p-4">
+            <div className="mb-4 rounded-xl border border-purple-200 bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/40 dark:to-blue-900/30 dark:border-purple-700/60">
               <div className="flex items-start gap-3">
-                <Sparkles className="h-5 w-5 text-purple-600" />
+                <Sparkles className="h-5 w-5 text-purple-600 dark:text-purple-200" />
                 <div className="space-y-1">
                   <p className="text-sm font-semibold text-foreground">{text.quick.premiumTitle}</p>
                   <p className="text-xs text-muted-foreground">{text.quick.premiumDescription}</p>
@@ -456,7 +461,7 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
                 variant="primary"
                 size="lg"
                 onClick={onUpgrade}
-                className="w-full !bg-primary !text-white hover:!bg-blue-700"
+                className="w-full !bg-primary !text-primary-foreground hover:!bg-primary/90 shadow-md shadow-primary/20 border border-primary/40"
               >
                 <Sparkles className="h-5 w-5" />
                 <span className="font-semibold">{text.quick.upgrade}</span>
@@ -466,7 +471,7 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
                 variant="secondary"
                 size="lg"
                 onClick={() => window.open(chrome.runtime.getURL("src/report/index.html"))}
-                className="w-full !border !border-red-200 !bg-red-50 !text-red-600 hover:!bg-red-100"
+                className="w-full !border !border-secondary/40 !bg-secondary/10 !text-foreground hover:!bg-secondary/20"
               >
                 <ActivityIcon className="h-4 w-4" />
                 <span>{text.quick.report}</span>
@@ -496,16 +501,16 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
             </div>
           </div>
 
-          <div className="rounded-xl border border-green-200 bg-gradient-to-br from-green-50 to-blue-50 p-6">
+          <div className="rounded-xl border border-green-200 bg-gradient-to-br from-green-50 to-blue-50 dark:from-emerald-900/40 dark:to-blue-900/30 dark:border-emerald-700/60 p-6">
             <div className="mb-4 flex items-center gap-2">
-              <Gauge className="h-5 w-5 text-green-600" />
+              <Gauge className="h-5 w-5 text-green-600 dark:text-emerald-200" />
               <h3 className="text-lg font-semibold text-foreground">{text.score.title}</h3>
             </div>
             <div className="text-center">
-              <div className="mb-2 text-4xl font-bold text-green-600">98</div>
+              <div className="mb-2 text-4xl font-bold text-green-600 dark:text-emerald-200">98</div>
               <p className="mb-4 text-sm text-muted-foreground">{text.score.caption}</p>
-              <div className="h-2 w-full overflow-hidden rounded-full bg-gray-200">
-                <div className="h-full rounded-full bg-green-600" style={{ width: "98%" }} />
+              <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                <div className="h-full rounded-full bg-green-600 dark:bg-emerald-300" style={{ width: "98%" }} />
               </div>
             </div>
           </div>

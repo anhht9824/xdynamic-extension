@@ -18,6 +18,22 @@ Design System này được xây dựng trên nền tảng **Minimalist Card-bas
 | **Success** | `green-500` | `#10B981` | Màu cho các thông báo thành công. |
 | **Warning/Danger** | `red-600` | `#DC2626` | Màu cho các hành động nguy hiểm hoặc cảnh báo. |
 
+### 1.1.1. Dark Mode Color Pattern (derived from Light palette)
+
+| Thuộc tính | Mã Hex | Mô tả |
+| :--- | :--- | :--- |
+| **Dark Background** | `#0B1220` | Nền chính cho Dark Mode. |
+| **Dark Card / Surface** | `#111827` | Nền card/khối nội dung chính. |
+| **Elevated Card** | `#16213D` | Bề mặt nâng (hover/overlay). |
+| **Border** | `#1F2A3D` | Viền/đường phân tách. |
+| **Muted Foreground** | `#94A3B8` | Văn bản phụ / icon trạng thái. |
+| **Primary (Dark)** | `#3B82F6` | CTA/Brand trên nền tối (kế thừa #1D4ED8, tăng độ sáng). |
+| **Secondary (Dark)** | `#22D3EE` | Màu phụ/badge trên nền tối (kế thừa #06B6D4). |
+| **Focus/Ring** | `#3B82F6` | Outline và ánh cho trạng thái focus. |
+| **Glass Overlay** | `rgba(16,23,42,0.35~0.6)` | Overlay/blur cho Dark Mode. |
+
+Nguyên tắc: giữ tỉ lệ Primary/Secondary tiết chế, đảm bảo độ tương phản giữa nền tối và văn bản (foreground ≥ 4.5:1). Card và background không đổi layout khi chuyển theme.
+
 ### 1.2. Typography
 
 *   **Font Family:** Inter, ui-sans-serif, system-ui, ... (Đã có trong `tailwind.config.mjs`).
@@ -29,6 +45,12 @@ Design System này được xây dựng trên nền tảng **Minimalist Card-bas
     *   **Card:** Sử dụng góc bo tròn nhẹ (`rounded-lg`) và đổ bóng tinh tế (`shadow-sm` hoặc `shadow-md`) để phân tách nội dung.
     *   **Layout Màn hình Độc lập:** Centered Card (Card trung tâm, căn giữa màn hình) cho Login, Payment, Report.
 *   **Thư viện Component:** Khuyến nghị sử dụng các component từ Shadcn/ui (hoặc tự xây dựng dựa trên Radix UI) để tạo ra các thành phần như Button, Input, Card, Progress Bar, Switch, v.v.
+
+### 1.4. Prompt: Language & Theme UX
+
+- Language: 2-option segmented control (English/Vietnamese), nhãn rõ ràng, helper đặt ngay dưới để nhắc “Đồng bộ Popup + Dashboard + tab liên quan”.
+- Theme: 2-option segmented control (Light/Dark) kèm pill trạng thái hiển thị theme đang áp dụng; ghi chú rõ theme chỉ áp dụng cho Dashboard/User Hub.
+- Chuyển theme phải mượt: đặt class `light`/`dark` lên `<html>` trước khi hydrate (đọc cache localStorage), bật `color-scheme`, tránh FOUC hoặc thay đổi layout khi chuyển.
 
 ## 2. Kế hoạch Triển khai Chi tiết (Phase 2)
 

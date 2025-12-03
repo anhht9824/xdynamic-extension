@@ -153,24 +153,24 @@ const UpgradeScreen: React.FC<UpgradeScreenProps> = ({ onSelectPlan, onBack }) =
     switch (planType) {
       case "free":
         return {
-          border: "border-gray-200",
-          glow: "shadow-[0_10px_30px_-12px_rgba(107,114,128,0.35)]",
-          button: "bg-gray-500 hover:bg-gray-600",
-          badge: "bg-gray-100 text-gray-800",
+          border: "border-border/80",
+          glow: "shadow-[0_12px_32px_-14px_rgba(148,163,184,0.25)]",
+          button: "bg-muted text-foreground hover:bg-muted/80",
+          badge: "bg-muted text-foreground",
         };
       case "plus":
         return {
-          border: "border-blue-200",
-          glow: "shadow-[0_10px_30px_-12px_rgba(37,99,235,0.35)]",
-          button: "bg-blue-500 hover:bg-blue-600",
-          badge: "bg-blue-100 text-blue-800",
+          border: "border-primary/60",
+          glow: "shadow-[0_12px_32px_-14px_rgba(93,168,255,0.35)]",
+          button: "bg-primary text-primary-foreground hover:bg-primary/90",
+          badge: "bg-primary/15 text-primary",
         };
       case "pro":
         return {
-          border: "border-purple-200",
-          glow: "shadow-[0_10px_30px_-12px_rgba(126,34,206,0.35)]",
-          button: "bg-purple-500 hover:bg-purple-600",
-          badge: "bg-purple-100 text-purple-800",
+          border: "border-secondary/60",
+          glow: "shadow-[0_12px_32px_-14px_rgba(70,201,248,0.32)]",
+          button: "bg-secondary text-secondary-foreground hover:bg-secondary/90",
+          badge: "bg-secondary/15 text-secondary-foreground",
         };
     }
   };
@@ -189,28 +189,28 @@ const UpgradeScreen: React.FC<UpgradeScreenProps> = ({ onSelectPlan, onBack }) =
   const selectedPlanObj = plans.find((p) => p.type === selectedPlan);
 
   return (
-    <div className="bg-gradient-to-b from-slate-50 to-white">
+    <div className="min-h-screen bg-background text-foreground">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="bg-white/90 backdrop-blur rounded-2xl border border-slate-200 shadow-lg overflow-hidden">
-          <div className="flex items-center justify-between border-b border-slate-200 px-4 sm:px-6 py-4">
+        <div className="bg-card/95 backdrop-blur rounded-2xl border border-border shadow-2xl overflow-hidden">
+          <div className="flex items-center justify-between border-b border-border/80 px-4 sm:px-6 py-4 bg-muted/30">
             <div className="flex items-center space-x-3">
               <button
                 onClick={onBack}
-                className="p-2 rounded-full bg-slate-100 hover:bg-slate-200 transition-colors"
+                className="p-2 rounded-full bg-muted hover:bg-accent transition-colors text-foreground"
                 aria-label={tr("Quay lại", "Go back")}
               >
-                <svg className="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
               </button>
               <div>
-                <h1 className="text-xl sm:text-2xl font-bold text-slate-900">{tr("Nâng cấp gói cước", "Upgrade your plan")}</h1>
-                <p className="text-sm text-slate-600">{tr("Chọn gói phù hợp với nhu cầu của bạn", "Pick the plan that fits you best")}</p>
+                <h1 className="text-xl sm:text-2xl font-bold">{tr("Nâng cấp gói cước", "Upgrade your plan")}</h1>
+                <p className="text-sm text-muted-foreground">{tr("Chọn gói phù hợp với nhu cầu của bạn", "Pick the plan that fits you best")}</p>
               </div>
             </div>
           </div>
 
-          <div className="px-4 sm:px-6 py-6 space-y-8">
+          <div className="px-4 sm:px-6 py-6 space-y-8 bg-background/40">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {plans.map((plan) => {
                 const colors = getPlanColor(plan.type);
@@ -221,21 +221,21 @@ const UpgradeScreen: React.FC<UpgradeScreenProps> = ({ onSelectPlan, onBack }) =
                 return (
                   <div
                     key={plan.id}
-                    className={`relative rounded-2xl border ${colors.border} bg-white p-5 transition-all cursor-pointer ${
-                      isSelected ? `${colors.glow} ring-2 ring-offset-2 ring-blue-200` : "hover:shadow-md"
+                    className={`relative rounded-2xl border ${colors.border} bg-card p-5 transition-all cursor-pointer ${
+                      isSelected ? `${colors.glow} ring-2 ring-offset-2 ring-primary/40 ring-offset-background` : "hover:shadow-lg hover:border-primary/40"
                     }`}
                     onClick={() => setSelectedPlan(plan.type)}
                   >
                     {plan.isPopular && (
-                      <span className="absolute -top-3 right-4 rounded-full bg-amber-100 text-amber-800 text-xs font-semibold px-3 py-1 shadow-sm">
+                      <span className="absolute -top-3 right-4 rounded-full bg-primary/15 text-primary text-xs font-semibold px-3 py-1 shadow-sm">
                         {plan.badge}
                       </span>
                     )}
 
                     <div className="flex items-center justify-between mb-3">
                       <div>
-                        <p className="text-sm text-slate-500">{plan.name}</p>
-                        <p className="text-lg font-bold text-slate-900">{plan.nameVi}</p>
+                        <p className="text-sm text-muted-foreground">{plan.name}</p>
+                        <p className="text-lg font-bold text-foreground">{plan.nameVi}</p>
                       </div>
                     </div>
 
@@ -243,17 +243,17 @@ const UpgradeScreen: React.FC<UpgradeScreenProps> = ({ onSelectPlan, onBack }) =
                       <div className="flex items-baseline space-x-2">
                         {discount > 0 && plan.price > 0 && isSelected ? (
                           <>
-                            <span className="text-3xl font-bold text-slate-900">{formatCurrency(finalPrice, plan.currency)}</span>
-                            <span className="text-lg text-slate-400 line-through">{formatCurrency(plan.price, plan.currency)}</span>
+                            <span className="text-3xl font-bold text-foreground">{formatCurrency(finalPrice, plan.currency)}</span>
+                            <span className="text-lg text-muted-foreground line-through">{formatCurrency(plan.price, plan.currency)}</span>
                           </>
                         ) : (
-                          <span className="text-3xl font-bold text-slate-900">{formatCurrency(plan.price, plan.currency)}</span>
+                          <span className="text-3xl font-bold text-foreground">{formatCurrency(plan.price, plan.currency)}</span>
                         )}
                       </div>
-                      <p className="text-sm text-slate-500">{plan.price === 0 ? tr("Mãi mãi", "Forever") : `/ ${plan.period === "month" ? tr("tháng", "month") : "year"}`}</p>
+                      <p className="text-sm text-muted-foreground">{plan.price === 0 ? tr("Mãi mãi", "Forever") : `/ ${plan.period === "month" ? tr("tháng", "month") : "year"}`}</p>
                       {plan.trialDays && isSelected && useTrialPeriod && (
                         <div className="mt-2">
-                          <span className="inline-block bg-green-100 text-green-800 text-xs font-semibold px-3 py-1 rounded-full">
+                          <span className="inline-block bg-green-500/15 text-green-200 text-xs font-semibold px-3 py-1 rounded-full border border-green-500/30">
                             {tr("Dùng thử", "Trial")} {plan.trialDays} {tr("ngày miễn phí", "days free")}
                           </span>
                         </div>
@@ -264,8 +264,8 @@ const UpgradeScreen: React.FC<UpgradeScreenProps> = ({ onSelectPlan, onBack }) =
                       {plan.features.map((feature) => (
                         <div key={feature.id} className="flex items-start space-x-2">
                           {feature.included ? (
-                            <div className="flex-shrink-0 w-5 h-5 bg-green-100 rounded-full flex items-center justify-center mt-0.5">
-                              <svg className="w-3 h-3 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                            <div className="flex-shrink-0 w-5 h-5 bg-green-500/15 rounded-full flex items-center justify-center mt-0.5 border border-green-500/40">
+                              <svg className="w-3 h-3 text-green-400" fill="currentColor" viewBox="0 0 20 20">
                                 <path
                                   fillRule="evenodd"
                                   d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
@@ -274,8 +274,8 @@ const UpgradeScreen: React.FC<UpgradeScreenProps> = ({ onSelectPlan, onBack }) =
                               </svg>
                             </div>
                           ) : (
-                            <div className="flex-shrink-0 w-5 h-5 bg-slate-200 rounded-full flex items-center justify-center mt-0.5">
-                              <svg className="w-3 h-3 text-slate-400" fill="currentColor" viewBox="0 0 20 20">
+                            <div className="flex-shrink-0 w-5 h-5 bg-muted rounded-full flex items-center justify-center mt-0.5 border border-border/60">
+                              <svg className="w-3 h-3 text-muted-foreground" fill="currentColor" viewBox="0 0 20 20">
                                 <path
                                   fillRule="evenodd"
                                   d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
@@ -284,7 +284,7 @@ const UpgradeScreen: React.FC<UpgradeScreenProps> = ({ onSelectPlan, onBack }) =
                               </svg>
                             </div>
                           )}
-                          <span className={`text-sm ${feature.included ? "text-slate-900" : "text-slate-400"}`}>{tr(feature.vi, feature.en)}</span>
+                          <span className={`text-sm ${feature.included ? "text-foreground" : "text-muted-foreground"}`}>{tr(feature.vi, feature.en)}</span>
                         </div>
                       ))}
                     </div>
@@ -295,8 +295,12 @@ const UpgradeScreen: React.FC<UpgradeScreenProps> = ({ onSelectPlan, onBack }) =
                         setSelectedPlan(plan.type);
                       }}
                       disabled={isCurrent}
-                      className={`w-full py-3 text-white font-semibold transition-colors ${
-                        isCurrent ? "bg-slate-200 text-slate-500 cursor-not-allowed" : isSelected ? colors.button : "bg-slate-200 text-slate-700 hover:bg-slate-300"
+                      className={`w-full py-3 font-semibold transition-colors ${
+                        isCurrent
+                          ? "bg-muted text-muted-foreground cursor-not-allowed"
+                          : isSelected
+                            ? colors.button
+                            : "bg-accent text-foreground hover:bg-accent/80"
                       }`}
                     >
                       {isCurrent ? tr("Bạn đang ở gói này", "Current plan") : isSelected ? tr("Đã chọn", "Selected") : tr("Chọn gói này", "Choose this plan")}
@@ -307,31 +311,31 @@ const UpgradeScreen: React.FC<UpgradeScreenProps> = ({ onSelectPlan, onBack }) =
             </div>
 
             {selectedPlanObj && selectedPlanObj.trialDays && (
-              <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+              <div className="bg-card rounded-xl shadow-sm border border-border p-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                      <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="w-12 h-12 bg-green-500/15 border border-green-500/30 rounded-full flex items-center justify-center">
+                      <svg className="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                     </div>
                     <div>
-                      <h3 className="font-semibold text-slate-900">{tr("Dùng thử miễn phí", "Free trial")}</h3>
-                      <p className="text-sm text-slate-600">
+                      <h3 className="font-semibold text-foreground">{tr("Dùng thử miễn phí", "Free trial")}</h3>
+                      <p className="text-sm text-muted-foreground">
                         {tr("Dùng thử", "Try for")} {selectedPlanObj.trialDays} {tr("ngày hoàn toàn miễn phí, không cần thanh toán trước", "days free, no upfront payment")}
                       </p>
                     </div>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" checked={useTrialPeriod} onChange={(e) => setUseTrialPeriod(e.target.checked)} className="sr-only peer" />
-                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:bg-blue-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full peer-checked:after:border-white"></div>
+                    <div className="w-11 h-6 bg-muted peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/40 rounded-full peer peer-checked:bg-primary after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-background after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full peer-checked:after:border-background"></div>
                   </label>
                 </div>
               </div>
             )}
 
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 space-y-3">
-              <h3 className="font-semibold text-slate-900">{tr("Mã khuyến mãi", "Promo code")}</h3>
+            <div className="bg-card rounded-xl shadow-sm border border-border p-6 space-y-3">
+              <h3 className="font-semibold text-foreground">{tr("Mã khuyến mãi", "Promo code")}</h3>
               <div className="flex flex-col sm:flex-row gap-3">
                 <input
                   type="text"
@@ -342,14 +346,14 @@ const UpgradeScreen: React.FC<UpgradeScreenProps> = ({ onSelectPlan, onBack }) =
                     setDiscount(0);
                   }}
                   placeholder={tr("Nhập mã khuyến mãi", "Enter promo code")}
-                  className="flex-1 px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="flex-1 px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-transparent bg-background text-foreground placeholder:text-muted-foreground"
                 />
-                <Button onClick={handleApplyPromo} disabled={!promoCode || isLoading} className="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white disabled:bg-slate-300">
+                <Button onClick={handleApplyPromo} disabled={!promoCode || isLoading} className="px-6 py-2 bg-primary hover:bg-primary/90 text-primary-foreground disabled:bg-muted disabled:text-muted-foreground">
                   {isLoading ? tr("Đang kiểm tra...", "Checking...") : tr("Áp dụng", "Apply")}
                 </Button>
               </div>
               {promoApplied && (
-                <div className="flex items-center text-sm text-green-600">
+                <div className="flex items-center text-sm text-green-400">
                   <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
                     <path
                       fillRule="evenodd"
@@ -360,46 +364,46 @@ const UpgradeScreen: React.FC<UpgradeScreenProps> = ({ onSelectPlan, onBack }) =
                   {tr("Mã đã áp dụng thành công! Giảm", "Promo applied! Discount")} {discount}%
                 </div>
               )}
-              <div className="text-xs text-slate-500">
+              <div className="text-xs text-muted-foreground">
                 {tr("Gợi ý", "Hint")}: <span className="font-mono font-semibold">SAVE20</span> {tr("hoặc", "or")}{" "}
                 <span className="font-mono font-semibold">FIRST50</span>
               </div>
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+            <div className="bg-card rounded-xl shadow-sm border border-border p-6">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                  <p className="text-sm text-slate-600">{tr("Tổng thanh toán", "Total due")}</p>
+                  <p className="text-sm text-muted-foreground">{tr("Tổng thanh toán", "Total due")}</p>
                   <div className="flex items-baseline space-x-2">
                     {selectedPlanObj && (
                       <>
-                        <p className="text-3xl font-bold text-slate-900">{formatCurrency(calculatePrice(selectedPlanObj), selectedPlanObj.currency)}</p>
+                        <p className="text-3xl font-bold text-foreground">{formatCurrency(calculatePrice(selectedPlanObj), selectedPlanObj.currency)}</p>
                         {discount > 0 && selectedPlanObj.price > 0 && (
-                          <p className="text-lg text-slate-400 line-through">{formatCurrency(selectedPlanObj.price, selectedPlanObj.currency)}</p>
+                          <p className="text-lg text-muted-foreground line-through">{formatCurrency(selectedPlanObj.price, selectedPlanObj.currency)}</p>
                         )}
                       </>
                     )}
                   </div>
                   {useTrialPeriod && selectedPlanObj?.trialDays && (
-                    <p className="text-sm text-green-600 mt-1">
+                    <p className="text-sm text-green-400 mt-1">
                       {tr("Miễn phí", "Free")} {selectedPlanObj.trialDays} {tr("ngày đầu tiên", "first days")}
                     </p>
                   )}
                 </div>
                 <Button
                   onClick={handleSubscribe}
-                  className="px-8 py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white text-base font-semibold"
+                  className="px-8 py-3 bg-primary hover:bg-primary/90 text-primary-foreground text-base font-semibold shadow-md shadow-primary/25"
                 >
                   {tr("Đăng ký ngay", "Subscribe now")}
                 </Button>
               </div>
-              <p className="text-xs text-slate-500 text-center mt-4">
+              <p className="text-xs text-muted-foreground text-center mt-4">
                 {tr("Bằng việc đăng ký, bạn đồng ý với", "By subscribing you agree to")}{" "}
-                <a href="https://xdynamic.app/terms" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                <a href="https://xdynamic.app/terms" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
                   {tr("Điều khoản dịch vụ", "Terms of Service")}
                 </a>{" "}
                 {tr("và", "and")}{" "}
-                <a href="https://xdynamic.app/privacy" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                <a href="https://xdynamic.app/privacy" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
                   {tr("Chính sách bảo mật", "Privacy Policy")}
                 </a>
               </p>

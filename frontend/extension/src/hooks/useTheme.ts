@@ -1,84 +1,123 @@
-import { useState, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Theme } from "../types";
 
+const STORAGE_KEY = "theme";
+const LOCAL_STORAGE_KEY = "xdynamic-theme";
+
+const isThemeValue = (value: unknown): value is Theme =>
+  value === "light" || value === "dark" || value === "system";
+
+const getSystemTheme = (): "light" | "dark" =>
+  window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+
+const resolveThemeValue = (theme: Theme): "light" | "dark" =>
+  theme === "system" ? getSystemTheme() : theme;
+
+const getCachedTheme = (): Theme | null => {
+  try {
+    const cached = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (isThemeValue(cached)) {
+      return cached;
+    }
+  } catch {
+    // ignore localStorage errors (private/incognito or disabled)
+  }
+  return null;
+};
+
+const normalizeTheme = (value: Theme): Theme => {
+  if (value === "system") {
+    return getSystemTheme();
+  }
+  return value;
+};
+
+const initialTheme = normalizeTheme(getCachedTheme() ?? "system");
+const initialResolvedTheme = resolveThemeValue(initialTheme);
+
 export const useTheme = () => {
-  const [theme, setTheme] = useState<Theme>("system");
-  const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("light");
+  const [theme, setTheme] = useState<Theme>(initialTheme);
+  const [resolvedTheme, setResolvedTheme] =
+    useState<"light" | "dark">(initialResolvedTheme);
 
-  // Get system theme preference
-  const getSystemTheme = useCallback((): "light" | "dark" => {
-    return window.matchMedia("(prefers-color-scheme: dark)").matches
-      ? "dark"
-      : "light";
-  }, []);
-
-  // Resolve theme based on current setting
-  const resolveTheme = useCallback(
-    (currentTheme: Theme): "light" | "dark" => {
-      if (currentTheme === "system") {
-        return getSystemTheme();
-      }
-      return currentTheme;
-    },
-    [getSystemTheme]
-  );
-
-  // Apply theme to document
+  // Apply theme to the document and persist selection
   const applyTheme = useCallback(
-    (resolvedTheme: "light" | "dark") => {
+    (nextResolved: "light" | "dark", rawTheme: Theme) => {
+      const isPopup = typeof document !== "undefined" && document.body?.classList.contains("popup");
+      const storedTheme = normalizeTheme(rawTheme);
+      const resolvedForDom = isPopup ? "light" : nextResolved;
+
       const root = document.documentElement;
       root.classList.remove("light", "dark");
-      root.classList.add(resolvedTheme);
+      root.classList.add(resolvedForDom);
+      root.dataset.theme = storedTheme;
+      root.dataset.themeResolved = resolvedForDom;
+      root.style.colorScheme = resolvedForDom;
 
-      // Store in chrome storage
-      chrome.storage.local.set({ theme: theme });
+      try {
+        localStorage.setItem(LOCAL_STORAGE_KEY, storedTheme);
+      } catch {
+        // ignore localStorage errors
+      }
+
+      try {
+        chrome.storage.local.set({ [STORAGE_KEY]: storedTheme });
+      } catch {
+        // chrome.storage is not available in some environments (tests)
+      }
     },
-    [theme]
+    []
   );
 
   // Change theme
   const changeTheme = useCallback(
     (newTheme: Theme) => {
-      setTheme(newTheme);
-      const resolved = resolveTheme(newTheme);
+      const normalizedTheme = normalizeTheme(newTheme);
+      setTheme(normalizedTheme);
+      const resolved = resolveThemeValue(normalizedTheme);
       setResolvedTheme(resolved);
-      applyTheme(resolved);
+      applyTheme(resolved, normalizedTheme);
     },
-    [resolveTheme, applyTheme]
+    [applyTheme]
   );
 
   // Toggle between light and dark
   const toggleTheme = useCallback(() => {
-    const newTheme = resolvedTheme === "light" ? "dark" : "light";
-    changeTheme(newTheme);
+    const nextTheme = resolvedTheme === "light" ? "dark" : "light";
+    changeTheme(nextTheme);
   }, [resolvedTheme, changeTheme]);
 
-  // Initialize theme from storage
+  // Initialize theme from chrome storage (keeps popup/dashboard in sync)
   useEffect(() => {
-    chrome.storage.local.get(["theme"], (result) => {
-      const savedTheme = (result.theme as Theme) || "system";
-      setTheme(savedTheme);
-      const resolved = resolveTheme(savedTheme);
-      setResolvedTheme(resolved);
-      applyTheme(resolved);
-    });
-  }, [resolveTheme, applyTheme]);
+    if (typeof chrome === "undefined" || !chrome.storage?.local) {
+      return;
+    }
 
-  // Listen for system theme changes
+    chrome.storage.local.get([STORAGE_KEY], (result) => {
+      const savedTheme = (result[STORAGE_KEY] as Theme) ?? initialTheme;
+      if (!isThemeValue(savedTheme)) return;
+      const normalized = normalizeTheme(savedTheme);
+      setTheme(normalized);
+      const resolved = resolveThemeValue(normalized);
+      setResolvedTheme(resolved);
+      applyTheme(resolved, normalized);
+    });
+  }, [applyTheme]);
+
+  // Listen for system theme changes when matching system
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-
     const handleChange = () => {
       if (theme === "system") {
         const resolved = getSystemTheme();
         setResolvedTheme(resolved);
-        applyTheme(resolved);
+        applyTheme(resolved, theme);
       }
     };
 
     mediaQuery.addEventListener("change", handleChange);
     return () => mediaQuery.removeEventListener("change", handleChange);
-  }, [theme, getSystemTheme, applyTheme]);
+  }, [theme, applyTheme]);
 
   return {
     theme,
@@ -87,6 +126,6 @@ export const useTheme = () => {
     toggleTheme,
     isLight: resolvedTheme === "light",
     isDark: resolvedTheme === "dark",
-    isSystem: theme === "system",
+    isSystem: false,
   };
 };
