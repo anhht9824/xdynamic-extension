@@ -120,6 +120,7 @@ const UserHub: React.FC = () => {
     usagePercentage: 0,
     usedGB: 0,
     totalGB: DEFAULTS.USAGE_LIMIT_GB,
+    usageUnit: "GB",
     blockedToday: 0,
     protectionStatus: "off",
     autoUpdate: DEFAULTS.AUTO_UPDATE_ENABLED,
@@ -175,10 +176,45 @@ const UserHub: React.FC = () => {
 
         // Map stats to dashboardMetrics
         setUserStats(stats);
+        const usedRaw =
+          stats.usedQuotaGB ??
+          stats.usage?.used ??
+          (typeof stats.used_quota === "number" ? stats.used_quota : undefined);
+
+        const totalRaw =
+          stats.totalQuotaGB ??
+          stats.usage?.total ??
+          (typeof stats.total_quota === "number" ? stats.total_quota : undefined);
+
+        const usedGB = typeof usedRaw === "number" ? usedRaw : dashboardMetrics.usedGB;
+        const totalGB = typeof totalRaw === "number" ? totalRaw : dashboardMetrics.totalGB;
+
+        const derivedUsagePercentage =
+          typeof stats.usagePercentage === "number"
+            ? stats.usagePercentage
+            : typeof stats.usage?.percent === "number"
+              ? stats.usage.percent
+              : totalRaw
+                ? ((usedRaw ?? 0) / totalRaw) * 100
+                : undefined;
+
+        const usageUnit =
+          stats.usageUnit ||
+          (stats.totalQuotaGB || stats.usedQuotaGB || stats.usage?.total || stats.usage?.used
+            ? "GB"
+            : (typeof stats.total_quota === "number" || typeof stats.used_quota === "number")
+              ? "lần"
+              : dashboardMetrics.usageUnit || "GB");
+
         setDashboardMetrics(prev => ({
           ...prev,
-          blockedToday: stats.todayBlocked,
-          // Other metrics might need separate endpoints or calculation
+          blockedToday: stats.todayBlocked ?? prev.blockedToday,
+          usedGB: usedGB ?? prev.usedGB,
+          totalGB: totalGB ?? prev.totalGB,
+          usageUnit,
+          usagePercentage:
+            derivedUsagePercentage ??
+            (totalGB ? (usedGB ?? 0) / totalGB * 100 : prev.usagePercentage),
         }));
 
       } catch (error) {
@@ -676,13 +712,7 @@ const UserHub: React.FC = () => {
           <div className="bg-white/50 backdrop-blur-sm border-b border-border/50">
             <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                {/* Breadcrumb */}
-                <SettingsBreadcrumb
-                  items={[
-                    { label: "Cài đặt", onClick: () => handleTabChange("dashboard") },
-                    { label: getSectionTitle(activeTab) },
-                  ]}
-                />
+
 
                 {/* Search */}
                 <SettingsSearch onNavigate={handleSearchNavigate} />

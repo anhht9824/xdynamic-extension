@@ -131,6 +131,7 @@ export interface DashboardMetrics {
   usagePercentage: number;
   usedGB: number;
   totalGB: number;
+  usageUnit?: string;
   blockedToday: number;
   protectionStatus: "on" | "off";
   autoUpdate: boolean;
@@ -184,6 +185,21 @@ export interface UserStatistics {
   todayBlocked: number;
   weeklyBlocked: number;
   monthlyBlocked: number;
+  // Optional usage/quota fields (if backend provides)
+  usageUnit?: string;
+  usagePercentage?: number;
+  usedQuotaGB?: number;
+  totalQuotaGB?: number;
+  used_quota?: number;
+  total_quota?: number;
+  usage?: {
+    used?: number;
+    total?: number;
+    percent?: number;
+  };
+  uptimePercent?: number;
+  totalScans?: number;
+  lastUpdatedAt?: string;
   byCategory: {
     sensitive: number;
     violence: number;

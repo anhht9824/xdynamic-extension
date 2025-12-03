@@ -50,3 +50,16 @@ class UsageLogRepository:
         start_of_month = datetime(now.year, now.month, 1)
         return self.count_by_user_in_period(user_id, start_of_month)
 
+    def count_blocked_by_user_in_period(self, user_id: int, start_date: datetime) -> int:
+        return self.db.query(UsageLog).filter(
+            UsageLog.user_id == user_id,
+            UsageLog.created_at >= start_date,
+            UsageLog.meta_data.like('%"blocked": true%')
+        ).count()
+
+    def count_total_blocked(self, user_id: int) -> int:
+        return self.db.query(UsageLog).filter(
+            UsageLog.user_id == user_id,
+            UsageLog.meta_data.like('%"blocked": true%')
+        ).count()
+

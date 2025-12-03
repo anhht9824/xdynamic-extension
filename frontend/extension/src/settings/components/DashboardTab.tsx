@@ -79,87 +79,53 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
   };
 
   const protectionOn = metrics.protectionStatus === "on";
+  const usageUnitLabel = metrics.usageUnit || "GB";
+  const formatUsageValue = (val: number) =>
+    Number.isFinite(val) ? val.toLocaleString("en-US", { maximumFractionDigits: usageUnitLabel === "lần" ? 0 : 1 }) : "0";
+
+  const uptimeDisplay =
+    typeof stats.uptimePercent === "number"
+      ? `${stats.uptimePercent.toFixed(1)}%`
+      : realtimeData.uptime;
+
+  const totalScansDisplay =
+    typeof stats.totalScans === "number" ? stats.totalScans.toLocaleString("en-US") : "1,247";
+
+  const lastUpdatedDisplay =
+    stats.lastUpdatedAt
+      ? new Date(stats.lastUpdatedAt).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit" })
+      : "Hôm nay";
 
   return (
     <div className="space-y-12" role="tabpanel" id="tabpanel-dashboard" aria-labelledby="tab-dashboard">
       <div className="space-y-8">
-        <AnimatedCard
-          delay={0}
-          className="w-full rounded-2xl border border-primary/20 bg-gradient-to-r bg-primary/5 to-primary/10 p-6 sm:p-8 shadow-sm"
-        >
-          <div className="flex flex-col gap-6">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-              <div className="space-y-2">
-                <p className="text-sm font-semibold text-blue-900/80">Trạng thái bảo vệ</p>
-                <div className="flex flex-wrap items-center gap-3">
-                  <span
-                    className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-semibold ${
-                      protectionOn ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"
-                    }`}
-                  >
-                    {protectionOn ? <ShieldCheck className="h-4 w-4" /> : <ShieldOff className="h-4 w-4" />}
-                    {protectionOn ? "BẬT" : "TẮT"}
-                  </span>
-                  <span className="text-sm text-gray-700">
-                    Bật để bảo vệ thiết bị của bạn, {userProfile.fullName || userProfile.email || "bạn"}.
-                  </span>
-                </div>
-              </div>
 
-              <div className="flex items-center gap-4">
-                <SettingToggle
-                  size="lg"
-                  checked={protectionOn}
-                  onChange={(next) => handleToggleProtection(next)}
-                  aria-label="Bật/Tắt bảo vệ"
-                />
-                <RippleButton
-                  variant="ghost"
-                  size="md"
-                  onClick={handleRefresh}
-                  disabled={refreshing}
-                  className="p-3 !bg-white rounded-xl shadow-md hover:shadow-lg disabled:opacity-50"
-                >
-                  <RefreshCw className={`h-5 w-5 text-primary ${refreshing ? "animate-spin" : ""}`} />
-                </RippleButton>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <div className="flex items-center gap-3 rounded-xl bg-white/80 p-3 shadow-sm">
-                <Ban className="h-9 w-9 rounded-full bg-red-50 p-2 text-red-600" />
-                <div>
-                  <p className="text-xs text-gray-500">Đã chặn hôm nay</p>
-                  <p className="text-lg font-semibold text-gray-900">{stats.todayBlocked}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 rounded-xl bg-white/80 p-3 shadow-sm">
-                <HardDrive className="h-9 w-9 rounded-full bg-primary/10 p-2 text-primary" />
-                <div>
-                  <p className="text-xs text-gray-500">Dung lượng</p>
-                  <p className="text-lg font-semibold text-gray-900">
-                    {metrics.usedGB}/{metrics.totalGB} GB
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 rounded-xl bg-white/80 p-3 shadow-sm">
-                <Gauge className="h-9 w-9 rounded-full bg-emerald-50 p-2 text-emerald-600" />
-                <div>
-                  <p className="text-xs text-gray-500">Uptime</p>
-                  <p className="text-lg font-semibold text-gray-900">{realtimeData.uptime}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </AnimatedCard>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <AnimatedCard delay={100} hover className={`${surface} p-4`}>
             <div className="mb-4 flex items-center justify-between">
               <div className="space-y-1">
-                <p className="text-sm font-semibold text-gray-800">Dung lượng</p>
+                <p className="text-sm font-semibold text-gray-800">Đã chặn</p>
+                <p className="text-xs text-gray-500">Hôm nay</p>
+              </div>
+              <Ban className="h-5 w-5 text-red-500" />
+            </div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-2xl font-bold text-gray-900">{metrics.blockedToday}</span>
+              <span className="inline-flex items-center gap-1 text-xs text-green-600">
+                <ArrowUpRight className="h-3 w-3" />
+                +{stats.todayBlocked}
+              </span>
+            </div>
+            <p className="mt-2 text-xs text-gray-500">Nội dung không phù hợp đã được chặn</p>
+          </AnimatedCard>
+
+          <AnimatedCard delay={200} hover className={`${surface} p-4`}>
+            <div className="mb-4 flex items-center justify-between">
+              <div className="space-y-1">
+                <p className="text-sm font-semibold text-gray-800">Hạn mức sử dụng</p>
                 <p className="text-xs text-gray-500">
-                  {metrics.usedGB} / {metrics.totalGB} GB
+                  {formatUsageValue(metrics.usedGB)} / {formatUsageValue(metrics.totalGB)} {usageUnitLabel}
                 </p>
               </div>
               <HardDrive className="h-5 w-5 text-blue-500" />
@@ -178,24 +144,6 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
                 </p>
               </div>
             </div>
-          </AnimatedCard>
-
-          <AnimatedCard delay={200} hover className={`${surface} p-4`}>
-            <div className="mb-4 flex items-center justify-between">
-              <div className="space-y-1">
-                <p className="text-sm font-semibold text-gray-800">Đã chặn</p>
-                <p className="text-xs text-gray-500">Hôm nay</p>
-              </div>
-              <Ban className="h-5 w-5 text-red-500" />
-            </div>
-            <div className="flex items-baseline gap-2">
-              <span className="text-2xl font-bold text-gray-900">{metrics.blockedToday}</span>
-              <span className="inline-flex items-center gap-1 text-xs text-green-600">
-                <ArrowUpRight className="h-3 w-3" />
-                +{stats.todayBlocked}
-              </span>
-            </div>
-            <p className="mt-2 text-xs text-gray-500">Nội dung không phù hợp đã được chặn</p>
           </AnimatedCard>
 
           <AnimatedCard delay={300} hover className={`${surface} p-4`}>
@@ -349,15 +297,15 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">Thời gian hoạt động</span>
-                <span className="font-semibold text-emerald-600">{realtimeData.uptime}</span>
+                <span className="font-semibold text-emerald-600">{uptimeDisplay}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">Trang web đã quét</span>
-                <span className="font-semibold text-gray-900">1,247</span>
+                <span className="font-semibold text-gray-900">{totalScansDisplay}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">Cập nhật cuối</span>
-                <span className="font-semibold text-gray-900">Hôm nay</span>
+                <span className="font-semibold text-gray-900">{lastUpdatedDisplay}</span>
               </div>
             </div>
           </div>

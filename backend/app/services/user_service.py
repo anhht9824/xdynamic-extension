@@ -161,12 +161,26 @@ class UserService:
         start_today = datetime(now.year, now.month, now.day)
         start_week = now - timedelta(days=7)
         start_month = datetime(now.year, now.month, 1)
+        subscription = self.subscription_service.get_active_subscription(user_id)
+        total_quota = subscription.monthly_quota if subscription else 0
+        used_quota = subscription.used_quota if subscription else 0
+        usage_percentage = (used_quota / total_quota * 100) if total_quota else None
+        # Optional stats: total scans can be mapped from usage logs, uptime placeholder for now
+        total_scans = self.usage_log_repo.count_total(user_id)
+        uptime_percent = 99.9  # Replace with real uptime if available
 
         stats = UserStatistics(
-            totalBlocked=self.usage_log_repo.count_total(user_id),
-            todayBlocked=self.usage_log_repo.count_by_user_in_period(user_id, start_today),
-            weeklyBlocked=self.usage_log_repo.count_by_user_in_period(user_id, start_week),
-            monthlyBlocked=self.usage_log_repo.count_by_user_in_period(user_id, start_month),
+            totalBlocked=self.usage_log_repo.count_total_blocked(user_id),
+            todayBlocked=self.usage_log_repo.count_blocked_by_user_in_period(user_id, start_today),
+            weeklyBlocked=self.usage_log_repo.count_blocked_by_user_in_period(user_id, start_week),
+            monthlyBlocked=self.usage_log_repo.count_blocked_by_user_in_period(user_id, start_month),
+            used_quota=used_quota,
+            total_quota=total_quota,
+            usage_percentage=usage_percentage,
+            usage_unit="lần",
+            uptime_percent=uptime_percent,
+            total_scans=total_scans,
+            last_updated_at=now.isoformat(),
             byCategory={"sensitive": 0, "violence": 0, "toxicity": 0, "vice": 0},
         )
         return stats

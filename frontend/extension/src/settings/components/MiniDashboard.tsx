@@ -18,6 +18,7 @@ const MiniDashboard: React.FC<MiniDashboardProps> = ({
     usagePercentage: 70,
     usedGB: 7.0,
     totalGB: 10.0,
+    usageUnit: "GB",
     blockedToday: 42,
     protectionStatus: "on",
     autoUpdate: true,
@@ -98,7 +99,7 @@ const MiniDashboard: React.FC<MiniDashboardProps> = ({
           <div className="bg-white dark:bg-gray-800 rounded-xl border-2 border-blue-200 dark:border-blue-700 p-6 shadow-sm">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                Dung lượng đã sử dụng
+                Hạn mức sử dụng
               </h3>
               <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
                 <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20">
@@ -116,7 +117,10 @@ const MiniDashboard: React.FC<MiniDashboardProps> = ({
                   {metrics.usagePercentage.toFixed(0)}%
                 </span>
                 <span className="text-gray-500 dark:text-gray-400">
-                  {metrics.usedGB.toFixed(1)}/{metrics.totalGB.toFixed(1)} GB
+                  {Number.isFinite(metrics.usedGB) ? metrics.usedGB.toLocaleString("en-US", { maximumFractionDigits: metrics.usageUnit === "lần" ? 0 : 1 }) : "0"}
+                  /
+                  {Number.isFinite(metrics.totalGB) ? metrics.totalGB.toLocaleString("en-US", { maximumFractionDigits: metrics.usageUnit === "lần" ? 0 : 1 }) : "0"}{" "}
+                  {metrics.usageUnit || "GB"}
                 </span>
               </div>
               <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">

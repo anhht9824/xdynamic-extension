@@ -67,4 +67,11 @@ class UserStatistics(BaseModel):
     todayBlocked: int
     weeklyBlocked: int
     monthlyBlocked: int
+    used_quota: int = 0
+    total_quota: int = 0
+    usage_percentage: float | None = None
+    usage_unit: str = "lần"
+    uptime_percent: float | None = None
+    total_scans: int | None = None
+    last_updated_at: str | None = None
     byCategory: Dict[str, int]

@@ -40,7 +40,7 @@ const MainScreen: React.FC<MainScreenProps> = ({
   onOpenLogin,
 }) => {
   const { filters, contentTypes, toggleFilter, toggleContentType, setFilters } = useFilterState();
-  const { blockedCount } = useStats();
+  const { todayBlocked } = useStats();
   const { isSignedIn, user } = useAuth();
 
   const effectivePlan: PlanType = useMemo(
@@ -91,7 +91,7 @@ const MainScreen: React.FC<MainScreenProps> = ({
         onRequireAuth={onOpenLogin}
       />
 
-      <StatsDisplay blockedCount={blockedCount} />
+      <StatsDisplay blockedCount={todayBlocked} />
 
       <div className="flex justify-center">
         <ReportButton onReport={handleReport} />
