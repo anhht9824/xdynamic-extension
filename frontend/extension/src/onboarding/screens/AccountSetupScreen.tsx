@@ -1,148 +1,227 @@
-import React, { useState } from "react";
-import { logger } from "../../utils";
-import type { User } from "../../types/auth";
-import { Button, FormInput } from "../../components/ui";
-import { isValidEmail } from "../../utils";
+import React, { useEffect, useState } from "react";
+import { Button } from "../../components/ui/button";
+import { Input } from "../../components/ui/input";
+import { Label } from "../../components/ui/label";
+import { LoadingSpinner } from "../../components/ui/LoadingSpinner";
+import { isValidEmail, VALIDATION } from "../../utils";
+import type { OnboardingProfile } from "../../types/onboarding";
 
 interface AccountSetupScreenProps {
-  onNext: (userData: Partial<User>) => void;
+  defaultValues: {
+    fullName: string;
+    email: string;
+    phone?: string;
+  };
+  onSubmit: (
+    payload: OnboardingProfile & { password: string }
+  ) => Promise<boolean>;
   onBack: () => void;
+  isLoading?: boolean;
+  errorMessage?: string;
 }
 
-const AccountSetupScreen: React.FC<AccountSetupScreenProps> = ({ onNext, onBack }) => {
+const AccountSetupScreen: React.FC<AccountSetupScreenProps> = ({
+  defaultValues,
+  onSubmit,
+  onBack,
+  isLoading,
+  errorMessage,
+}) => {
   const [formData, setFormData] = useState({
-    email: "",
-    fullName: "",
-    phone: "",
-    gender: "" as "male" | "female" | "other" | "",
+    fullName: defaultValues.fullName,
+    email: defaultValues.email,
+    phone: defaultValues.phone ?? "",
+    password: "",
+    confirmPassword: "",
   });
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [isLoading, setIsLoading] = useState(false);
 
-  const validateForm = () => {
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    setFormData((prev) => ({
+      ...prev,
+      fullName: defaultValues.fullName,
+      email: defaultValues.email,
+      phone: defaultValues.phone ?? "",
+    }));
+  }, [defaultValues]);
+
+  const validate = () => {
     const newErrors: Record<string, string> = {};
     const trimmedEmail = formData.email.trim();
 
-    if (!trimmedEmail) {
-      newErrors.email = "Email là bắt buộc";
-    } else if (!isValidEmail(trimmedEmail)) {
-      newErrors.email = "Email không hợp lệ";
+    if (!formData.fullName.trim()) {
+      newErrors.fullName = "Vui lòng nhập họ tên.";
     }
 
-    if (!formData.fullName) {
-      newErrors.fullName = "Tên người dùng là bắt buộc";
+    if (!trimmedEmail) {
+      newErrors.email = "Email là bắt buộc.";
+    } else if (!isValidEmail(trimmedEmail)) {
+      newErrors.email = "Email không hợp lệ.";
+    }
+
+    if (!formData.password) {
+      newErrors.password = "Cần tạo mật khẩu.";
+    } else if (formData.password.length < VALIDATION.PASSWORD_MIN_LENGTH) {
+      newErrors.password = `Mật khẩu tối thiểu ${VALIDATION.PASSWORD_MIN_LENGTH} ký tự.`;
+    }
+
+    if (formData.confirmPassword !== formData.password) {
+      newErrors.confirmPassword = "Mật khẩu xác nhận không khớp.";
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async () => {
-    if (validateForm()) {
-      setIsLoading(true);
-      try {
-        const userData: Partial<User> = {
-          email: formData.email.trim(),
-          fullName: formData.fullName,
-          phone: formData.phone,
-          gender: formData.gender || undefined,
-        };
-        await onNext(userData);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-  };
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!validate()) return;
 
-  const handleSocialLogin = (provider: string) => {
-    logger.info(`Social login initiated with ${provider}`);
+    await onSubmit({
+      fullName: formData.fullName.trim(),
+      email: formData.email.trim(),
+      phone: formData.phone || undefined,
+      password: formData.password,
+    });
   };
 
   return (
-    <div className="min-h-screen w-full flex flex-col bg-white">
-      <div className="flex items-center justify-between p-6 border-b border-gray-100">
-        <button
+    <div className="rounded-2xl border border-gray-100 bg-white shadow-md">
+      <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
+        <div>
+          <p className="text-sm font-semibold text-blue-700">Bước 2/5</p>
+          <h3 className="text-lg font-bold text-gray-900">Tạo tài khoản</h3>
+        </div>
+        <Button
+          variant="ghost"
+          className="text-sm text-gray-600 hover:text-gray-800"
           onClick={onBack}
-          className="text-gray-500 hover:text-gray-700 text-lg transition-colors"
+          type="button"
         >
-          ←
-        </button>
-        <span className="text-sm text-gray-500 font-medium">1/4</span>
+          ← Quay lại
+        </Button>
       </div>
 
-      <div className="flex-1 flex flex-col px-6 py-8 max-w-md mx-auto w-full">
-        <h1 className="text-2xl font-bold text-gray-900 text-center mb-3">
-          Đăng ký tài khoản
-        </h1>
-        <p className="text-gray-600 text-center text-base mb-8">
-          Tạo tài khoản mới cho bạn
-        </p>
+      <form className="space-y-6 p-6" onSubmit={handleSubmit}>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="fullName">Họ tên</Label>
+            <Input
+              id="fullName"
+              placeholder="Nguyễn Văn A"
+              value={formData.fullName}
+              onChange={(e) =>
+                setFormData({ ...formData, fullName: e.target.value })
+              }
+              className={errors.fullName ? "border-red-500" : ""}
+            />
+            {errors.fullName && (
+              <p className="text-sm text-red-600">{errors.fullName}</p>
+            )}
+          </div>
 
-        <div className="space-y-6 flex-1">
-          <FormInput
-            type="email"
-            placeholder="Email"
-            value={formData.email}
-            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            error={errors.email}
-          />
-
-          <FormInput type="password" placeholder="Mật khẩu" />
-
-          <FormInput type="password" placeholder="Xác nhận mật khẩu" />
-
-          <FormInput
-            type="text"
-            placeholder="Tên người dùng"
-            value={formData.fullName}
-            onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-            error={errors.fullName}
-          />
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="you@example.com"
+              value={formData.email}
+              onChange={(e) =>
+                setFormData({ ...formData, email: e.target.value })
+              }
+              className={errors.email ? "border-red-500" : ""}
+            />
+            {errors.email && (
+              <p className="text-sm text-red-600">{errors.email}</p>
+            )}
+          </div>
         </div>
 
-        <div className="space-y-4 mt-8">
-          <Button
-            onClick={handleSubmit}
-            disabled={isLoading}
-            className="w-full bg-green-500 hover:bg-green-600 text-white h-12 text-base disabled:opacity-50 disabled:cursor-not-allowed"
-            size="lg"
-          >
-            {isLoading ? (
-              <div className="flex items-center justify-center space-x-2">
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                <span>Đang xử lý...</span>
-              </div>
-            ) : (
-              "Đăng ký"
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="password">Mật khẩu</Label>
+            <Input
+              id="password"
+              type="password"
+              placeholder="Tối thiểu 8 ký tự"
+              value={formData.password}
+              onChange={(e) =>
+                setFormData({ ...formData, password: e.target.value })
+              }
+              className={errors.password ? "border-red-500" : ""}
+            />
+            {errors.password && (
+              <p className="text-sm text-red-600">{errors.password}</p>
             )}
-          </Button>
+          </div>
 
-          <Button
-            onClick={() => handleSocialLogin("facebook")}
-            variant="outline"
-            className="w-full h-12 text-base"
-            size="lg"
-          >
-            Đăng ký với Facebook
-          </Button>
+          <div className="space-y-2">
+            <Label htmlFor="confirmPassword">Nhập lại mật khẩu</Label>
+            <Input
+              id="confirmPassword"
+              type="password"
+              placeholder="Nhập lại để xác nhận"
+              value={formData.confirmPassword}
+              onChange={(e) =>
+                setFormData({ ...formData, confirmPassword: e.target.value })
+              }
+              className={errors.confirmPassword ? "border-red-500" : ""}
+            />
+            {errors.confirmPassword && (
+              <p className="text-sm text-red-600">{errors.confirmPassword}</p>
+            )}
+          </div>
+        </div>
 
-          <Button
-            onClick={() => handleSocialLogin("phone")}
-            variant="outline"
-            className="w-full h-12 text-base"
-            size="lg"
-          >
-            Đăng ký với số điện thoại
-          </Button>
-
-          <p className="text-center text-sm text-gray-500 mt-6">
-            Đã có tài khoản?{" "}
-            <span className="text-green-500 cursor-pointer hover:underline font-medium">
-              Đăng nhập
-            </span>
+        <div className="space-y-2">
+          <Label htmlFor="phone">Số điện thoại (tuỳ chọn)</Label>
+          <Input
+            id="phone"
+            type="tel"
+            placeholder="+84..."
+            value={formData.phone}
+            onChange={(e) =>
+              setFormData({ ...formData, phone: e.target.value })
+            }
+          />
+          <p className="text-sm text-gray-500">
+            Dùng để nhận cảnh báo quan trọng và hỗ trợ khôi phục.
           </p>
         </div>
-      </div>
+
+        {errorMessage && (
+          <div className="rounded-lg border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {errorMessage}
+          </div>
+        )}
+
+        <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+          <Button
+            type="button"
+            variant="outline"
+            className="h-11 sm:w-32"
+            onClick={onBack}
+          >
+            Quay lại
+          </Button>
+          <Button
+            type="submit"
+            className="h-11 bg-blue-700 text-white hover:bg-blue-800 sm:w-40"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <span className="flex items-center gap-2">
+                <LoadingSpinner size="sm" className="text-white" />
+                Đang tạo...
+              </span>
+            ) : (
+              "Tiếp tục"
+            )}
+          </Button>
+        </div>
+      </form>
     </div>
   );
 };

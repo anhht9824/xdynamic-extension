@@ -1,159 +1,133 @@
 import React, { useState } from "react";
-import { logger } from "../../utils";
-import { Button, FormInput } from "../../components/ui";
+import { Button } from "../../components/ui/button";
+import { Input } from "../../components/ui/input";
+import { Label } from "../../components/ui/label";
+import { LoadingSpinner } from "../../components/ui/LoadingSpinner";
 
 interface VerificationScreenProps {
-  onNext: () => void;
-  onBack: () => void;
   email: string;
+  onVerify: (code: string) => Promise<boolean>;
+  onResend: () => Promise<boolean>;
+  onBack: () => void;
+  isLoading?: boolean;
+  errorMessage?: string;
 }
 
-const VerificationScreen: React.FC<VerificationScreenProps> = ({ onNext, onBack, email }) => {
-  const [verificationCode, setVerificationCode] = useState("");
-  const [rememberPassword, setRememberPassword] = useState(false);
-  const [error, setError] = useState("");
+const VerificationScreen: React.FC<VerificationScreenProps> = ({
+  email,
+  onVerify,
+  onResend,
+  onBack,
+  isLoading,
+  errorMessage,
+}) => {
+  const [code, setCode] = useState("");
+  const [localError, setLocalError] = useState<string>("");
 
-  const handleVerify = () => {
-    if (!verificationCode || verificationCode.length !== 6) {
-      setError("Vui lòng nhập mã xác thực 6 số");
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (code.trim().length !== 6) {
+      setLocalError("Mã xác thực gồm 6 số.");
       return;
     }
-
-    // Simulate verification
-    if (verificationCode === "123456") {
-      onNext();
-    } else {
-      setError("Mã xác thực không đúng");
-    }
+    setLocalError("");
+    await onVerify(code.trim());
   };
 
-  const handleResendCode = () => {
-    // Simulate resend
-    setError("");
-    logger.info("Resending verification code");
-  };
-
-  const handleSocialLogin = (provider: string) => {
-    // Placeholder for social login
-    logger.info(`Social login initiated with ${provider}`);
+  const handleResend = async () => {
+    setLocalError("");
+    await onResend();
   };
 
   return (
-    <div className="min-h-screen w-full flex flex-col bg-white">
-      {/* Header */}
-      <div className="flex items-center justify-between p-6 border-b border-gray-100">
-        <button
+    <div className="rounded-2xl border border-gray-100 bg-white shadow-md">
+      <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
+        <div>
+          <p className="text-sm font-semibold text-blue-700">Bước 3/5</p>
+          <h3 className="text-lg font-bold text-gray-900">Xác thực email</h3>
+        </div>
+        <Button
+          variant="ghost"
+          className="text-sm text-gray-600 hover:text-gray-800"
           onClick={onBack}
-          className="text-gray-500 hover:text-gray-700 text-lg transition-colors"
+          type="button"
         >
-          ←
-        </button>
-        <span className="text-sm text-gray-500 font-medium">2/4</span>
+          ← Quay lại
+        </Button>
       </div>
 
-      {/* Content */}
-      <div className="flex-1 flex flex-col px-6 py-8 max-w-md mx-auto w-full">
-        <h1 className="text-2xl font-bold text-gray-900 text-center mb-3">
-          Chào mừng
-        </h1>
-        <p className="text-gray-600 text-center text-base mb-8">
-          Đăng nhập vào tài khoản của bạn
-        </p>
-
-        {/* Email Display */}
-        <div className="mb-6">
-          <label className="block text-base font-medium text-gray-700 mb-3">
-            Email
-          </label>
-          <div className="w-full p-4 border border-gray-200 rounded-lg bg-gray-50 text-gray-600">
-            {email}
+      <form className="space-y-6 p-6" onSubmit={handleSubmit}>
+        <div className="space-y-2">
+          <Label>Email của bạn</Label>
+          <div className="flex items-center justify-between rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 text-sm text-gray-700">
+            <span>{email || "Chưa có email"}</span>
+            <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">
+              Đã gửi mã
+            </span>
           </div>
         </div>
 
-        {/* Verification Code Input */}
-        <div className="mb-6">
-          <FormInput
-            type="text"
-            label="Mã xác thực"
-            placeholder="Nhập mã xác thực 6 số"
-            value={verificationCode}
-            onChange={(e) => {
-              setVerificationCode(e.target.value.replace(/\D/g, "").slice(0, 6));
-              setError("");
-            }}
-            className="text-center text-lg tracking-widest"
+        <div className="space-y-2">
+          <Label htmlFor="verificationCode">Mã xác thực 6 số</Label>
+          <Input
+            id="verificationCode"
+            inputMode="numeric"
+            pattern="[0-9]*"
             maxLength={6}
-            error={error}
+            placeholder="••••••"
+            value={code}
+            onChange={(e) =>
+              setCode(e.target.value.replace(/\D/g, "").slice(0, 6))
+            }
+            className="text-center text-lg tracking-[0.4em]"
           />
+          <p className="text-sm text-gray-500">
+            Kiểm tra hộp thư (hoặc spam) để lấy mã. Mã có hiệu lực trong 10 phút.
+          </p>
+          {(localError || errorMessage) && (
+            <p className="text-sm text-red-600">
+              {localError || errorMessage}
+            </p>
+          )}
         </div>
 
-        {/* Remember Password */}
-        <div className="flex items-center mb-8">
-          <input
-            type="checkbox"
-            id="remember"
-            checked={rememberPassword}
-            onChange={(e) => setRememberPassword(e.target.checked)}
-            className="mr-3 w-4 h-4"
-          />
-          <label htmlFor="remember" className="text-base text-gray-600">
-            Ghi nhớ mật khẩu?
-          </label>
-        </div>
-
-        {/* Resend Code Link */}
-        <div className="text-center mb-8">
+        <div className="flex items-center justify-between rounded-lg bg-blue-50 px-4 py-3 text-sm text-blue-800">
+          <span>Không nhận được mã?</span>
           <button
-            onClick={handleResendCode}
-            className="text-blue-500 text-base hover:underline font-medium"
+            type="button"
+            onClick={handleResend}
+            className="font-semibold hover:underline"
+            disabled={isLoading}
           >
-            Quên mật khẩu?
+            Gửi lại
           </button>
         </div>
 
-        {/* Login Button */}
-        <div className="space-y-4 mt-auto">
+        <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
           <Button
-            onClick={handleVerify}
-            className="w-full bg-green-500 hover:bg-green-600 text-white h-12 text-base"
-            size="lg"
+            type="button"
+            variant="outline"
+            className="h-11 sm:w-32"
+            onClick={onBack}
           >
-            Đăng nhập
+            Quay lại
           </Button>
-
-          {/* Or divider */}
-          <div className="text-center text-base text-gray-500 my-6">
-            hoặc tiếp tục với
-          </div>
-
-          {/* Social Login */}
-          <div className="space-y-3">
-            <Button
-              onClick={() => handleSocialLogin("facebook")}
-              variant="outline"
-              className="w-full h-12 text-base"
-              size="lg"
-            >
-              Tiếp tục với Facebook
-            </Button>
-            <Button
-              onClick={() => handleSocialLogin("phone")}
-              variant="outline"
-              className="w-full h-12 text-base"
-              size="lg"
-            >
-              Tiếp tục với số điện thoại
-            </Button>
-          </div>
-
-          <p className="text-center text-sm text-gray-500 mt-6">
-            Bạn chưa có tài khoản?{" "}
-            <span className="text-green-500 cursor-pointer hover:underline font-medium">
-              Đăng ký
-            </span>
-          </p>
+          <Button
+            type="submit"
+            className="h-11 bg-blue-700 text-white hover:bg-blue-800 sm:w-40"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <span className="flex items-center gap-2">
+                <LoadingSpinner size="sm" className="text-white" />
+                Đang xác thực...
+              </span>
+            ) : (
+              "Xác thực"
+            )}
+          </Button>
         </div>
-      </div>
+      </form>
     </div>
   );
 };

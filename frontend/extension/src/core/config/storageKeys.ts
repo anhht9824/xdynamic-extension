@@ -15,4 +15,5 @@ export const STORAGE_KEYS = {
   WEEKLY_BLOCKED: "weeklyBlocked",
   GUEST_MODE: "guestMode",
   HAS_COMPLETED_ONBOARDING: "hasCompletedOnboarding",
+  ONBOARDING_STATE: "onboardingState",
 } as const;

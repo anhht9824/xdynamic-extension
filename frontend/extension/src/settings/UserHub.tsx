@@ -18,9 +18,10 @@ import {
 } from "./components/SkeletonLoader";
 import { ConfirmationModal, Toast } from "../components/common";
 import { UserProfile, DashboardMetrics, SecuritySettings, PrivacySettings, UserStatistics } from "../types/common";
-import { DEFAULTS, EXTERNAL_LINKS, logger, navigateToPage, navigateToPageInCurrentTab } from "../utils";
+import { DEFAULTS, EXTERNAL_LINKS, logger, navigateToPage, navigateToPageInCurrentTab, STORAGE_KEYS } from "../utils";
 import { userService } from "../services/user.service";
 import { authService } from "../services/auth.service";
+import { readFromStorage, writeToStorage } from "../core/storage";
 
 type UserHubTab = "dashboard" | "overview" | "account" | "advanced";
 const ACTIVE_TAB_STORAGE_KEY = "xdynamic-userhub-tab";
@@ -157,17 +158,35 @@ const UserHub: React.FC = () => {
     const fetchData = async () => {
       setIsInitialLoading(true);
       try {
-        const [profile, settings, stats] = await Promise.all([
+        const [profile, settings, stats, extensionEnabled] = await Promise.all([
           userService.getProfile(),
           userService.getSettings(),
-          userService.getStatistics()
+          userService.getStatistics(),
+          readFromStorage<boolean>(STORAGE_KEYS.EXTENSION_ENABLED)
         ]);
 
         console.log("Fetched profile:", profile);
         setUserProfile(profile);
         
+        const resolvedProtection = extensionEnabled ?? settings.security?.realTimeProtection ?? DEFAULTS.PROTECTION_ENABLED;
+        const resolvedAutoUpdate =
+          typeof settings.security?.autoUpdate === "boolean"
+            ? settings.security.autoUpdate
+            : securitySettings.autoUpdate ?? DEFAULTS.AUTO_UPDATE_ENABLED;
+        const resolvedSpeedLimit =
+          typeof settings.security?.speedLimit === "number"
+            ? settings.security.speedLimit
+            : securitySettings.speedLimit ?? DEFAULTS.SPEED_LIMIT;
+
         if (settings.security) {
-          setSecuritySettings(settings.security);
+          // Sync with extension state if available and normalize missing fields
+          const syncedSecurity = {
+            ...settings.security,
+            realTimeProtection: resolvedProtection,
+            autoUpdate: resolvedAutoUpdate,
+            speedLimit: resolvedSpeedLimit,
+          };
+          setSecuritySettings(syncedSecurity);
         }
         
         if (settings.privacy) {
@@ -215,6 +234,10 @@ const UserHub: React.FC = () => {
           usagePercentage:
             derivedUsagePercentage ??
             (totalGB ? (usedGB ?? 0) / totalGB * 100 : prev.usagePercentage),
+          // Sync protection status with extension state
+          protectionStatus: resolvedProtection ? "on" : "off",
+          autoUpdate: resolvedAutoUpdate,
+          speedLimit: resolvedSpeedLimit,
         }));
 
       } catch (error) {
@@ -358,6 +381,25 @@ const UserHub: React.FC = () => {
     
     try {
       await userService.updateSettings({ security: { ...securitySettings, realTimeProtection: enabled } });
+      
+      // Sync with extension state (Popup toggle)
+      await writeToStorage(STORAGE_KEYS.EXTENSION_ENABLED, enabled);
+      
+      // Read-modify-write for full state
+      try {
+        const currentState = await readFromStorage<any>(STORAGE_KEYS.EXTENSION_STATE) || {};
+        const newState = { ...currentState, isEnabled: enabled };
+        await writeToStorage(STORAGE_KEYS.EXTENSION_STATE, newState);
+        await writeToStorage(STORAGE_KEYS.EXTENSION_ENABLED, enabled);
+        
+        chrome.runtime.sendMessage({
+          type: "STATE_UPDATED",
+          payload: newState,
+        });
+      } catch (e) {
+        console.error("Failed to sync extension state", e);
+      }
+
       logger.info("Protection toggled:", enabled);
       showToast(`Đã ${enabled ? "bật" : "tắt"} bảo vệ thời gian thực`, "success");
     } catch (error) {
@@ -392,8 +434,39 @@ const UserHub: React.FC = () => {
     try {
       await userService.updateSettings({ security: settings });
       
+      // Check if realTimeProtection changed and sync if needed
+      if (settings.realTimeProtection !== securitySettings.realTimeProtection) {
+        const enabled = settings.realTimeProtection;
+        
+        // Sync with extension storage
+        await writeToStorage(STORAGE_KEYS.EXTENSION_ENABLED, enabled);
+        
+        // Read-modify-write for full state
+        try {
+          const currentState = await readFromStorage<any>(STORAGE_KEYS.EXTENSION_STATE) || {};
+          const newState = { ...currentState, isEnabled: enabled };
+          await writeToStorage(STORAGE_KEYS.EXTENSION_STATE, newState);
+          
+          chrome.runtime.sendMessage({
+            type: "STATE_UPDATED",
+            payload: newState,
+          });
+        } catch (e) {
+          console.error("Failed to sync extension state in handleSaveSecuritySettings", e);
+        }
+
+        // Update dashboard metrics
+        setDashboardMetrics(prev => ({ ...prev, protectionStatus: enabled ? "on" : "off" }));
+      }
+
       logger.info("Saving security settings:", settings);
       setSecuritySettings(settings);
+      setDashboardMetrics(prev => ({
+        ...prev,
+        autoUpdate: settings.autoUpdate,
+        speedLimit: settings.speedLimit,
+        protectionStatus: settings.realTimeProtection ? "on" : "off",
+      }));
       showToast("Cài đặt bảo mật đã được lưu thành công!", "success");
     } catch (error) {
       logger.error("Failed to save security settings:", error);
@@ -414,13 +487,20 @@ const UserHub: React.FC = () => {
     try {
       await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate API call
       logger.info("Resetting security settings to defaults");
-      setSecuritySettings({
+      const resetSecurity = {
         realTimeProtection: DEFAULTS.PROTECTION_ENABLED,
         autoUpdate: DEFAULTS.AUTO_UPDATE_ENABLED,
         speedLimit: DEFAULTS.SPEED_LIMIT,
         customFilters: [],
         vpnEnabled: false,
-      });
+      };
+      setSecuritySettings(resetSecurity);
+      setDashboardMetrics(prev => ({
+        ...prev,
+        protectionStatus: resetSecurity.realTimeProtection ? "on" : "off",
+        autoUpdate: resetSecurity.autoUpdate,
+        speedLimit: resetSecurity.speedLimit,
+      }));
       showToast("Tất cả cài đặt đã được đặt lại về mặc định!", "success");
     } catch (error) {
       logger.error("Failed to reset settings:", error);
@@ -883,7 +963,7 @@ const UserHub: React.FC = () => {
               </svg>
             ),
             label: 'Tự động cập nhật',
-            value: true,
+            value: dashboardMetrics.autoUpdate,
             onChange: (enabled) => handleToggleAutoUpdate(enabled),
             color: 'blue'
           },

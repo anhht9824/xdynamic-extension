@@ -1,112 +1,118 @@
-import React, { useState } from "react";
-import { Button } from "../../components/ui";
+import React from "react";
+import { Button } from "../../components/ui/button";
+import { LoadingSpinner } from "../../components/ui/LoadingSpinner";
 
 interface ExperienceTipsScreenProps {
-  onComplete: () => void;
+  onComplete: () => Promise<void> | void;
   onBack: () => void;
+  isLoading?: boolean;
+  errorMessage?: string;
 }
 
-const ExperienceTipsScreen: React.FC<ExperienceTipsScreenProps> = ({ onComplete, onBack }) => {
-  const [expandedTip, setExpandedTip] = useState<number | null>(null);
+const tips = [
+  {
+    title: "Quyền truy cập web",
+    description:
+      "Cho phép XDynamic đọc URL để lọc và chặn nội dung độc hại theo thời gian thực.",
+  },
+  {
+    title: "Thông báo",
+    description:
+      "Nhận cảnh báo khi phát hiện rủi ro, tình trạng bảo vệ và nhật ký bảo vệ.",
+  },
+  {
+    title: "Đồng bộ tài khoản",
+    description:
+      "Giữ cài đặt, whitelist/blacklist và mức bảo vệ đồng nhất trên mọi thiết bị.",
+  },
+];
 
-  const tips = [
-    {
-      icon: "🌐",
-      title: "Truy cập nội dung trang web",
-      description: "Giúp tiện ích tương tác thông minh với nội dung bạn đang truy cập.",
-      details: "XDynamic sẽ phân tích và lọc nội dung độc hại trong thời gian thực khi bạn duyệt web."
-    },
-    {
-      icon: "💾",
-      title: "Bộ nhớ",
-      description: "Cho phép lưu trữ dữ liệu cục bộ nhớ cài đặt và tùy chọn cá nhân.",
-      details: "Lưu trữ cài đặt bộ lọc, danh sách trắng và các tùy chọn cá nhân hóa của bạn."
-    },
-    {
-      icon: "🔔",
-      title: "Thông báo",
-      description: "Gửi thông báo kịp thời khi có cập nhật hoặc sự kiện quan trọng.",
-      details: "Nhận cảnh báo khi phát hiện nội dung độc hại hoặc cập nhật bảo mật quan trọng."
-    }
-  ];
-
+const ExperienceTipsScreen: React.FC<ExperienceTipsScreenProps> = ({
+  onComplete,
+  onBack,
+  isLoading,
+  errorMessage,
+}) => {
   return (
-    <div className="min-h-screen w-full flex flex-col bg-white">
-      {/* Header */}
-      <div className="flex items-center justify-between p-6 border-b border-gray-100">
-        <button
+    <div className="rounded-2xl border border-gray-100 bg-white shadow-md">
+      <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
+        <div>
+          <p className="text-sm font-semibold text-blue-700">Bước 5/5</p>
+          <h3 className="text-lg font-bold text-gray-900">
+            Quyền cần thiết & hoàn tất
+          </h3>
+        </div>
+        <Button
+          variant="ghost"
+          className="text-sm text-gray-600 hover:text-gray-800"
           onClick={onBack}
-          className="text-gray-500 hover:text-gray-700 text-lg transition-colors"
+          type="button"
         >
-          ←
-        </button>
-        <span className="text-sm text-gray-500 font-medium">4/4</span>
+          ← Quay lại
+        </Button>
       </div>
 
-      {/* Content */}
-      <div className="flex-1 flex flex-col px-6 py-8 max-w-2xl mx-auto w-full">
-        {/* Image placeholder */}
-        <div className="w-full h-48 bg-blue-100 rounded-lg mb-8 flex items-center justify-center">
-          <div className="text-blue-500 text-base">Family Using Device</div>
+      <div className="space-y-6 p-6">
+        <div className="rounded-xl bg-gradient-to-r from-blue-700 to-cyan-500 p-5 text-white shadow-lg">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-lg font-bold">
+              ✓
+            </div>
+            <div>
+              <h4 className="text-lg font-semibold">Sẵn sàng kích hoạt</h4>
+              <p className="text-sm text-white/80">
+                Cấp quyền để bắt đầu bảo vệ. Bạn có thể thay đổi bất cứ lúc nào.
+              </p>
+            </div>
+          </div>
         </div>
 
-        {/* Title */}
-        <h1 className="text-2xl font-bold text-gray-900 text-center mb-4">
-          Tăng trải nghiệm lướt web cùng tiện ích của chúng tôi
-        </h1>
-
-        {/* Description */}
-        <p className="text-gray-600 text-center text-base mb-8 leading-relaxed">
-          Để bảo vệ bạn và mang đến trải nghiệm tối ưu,
-          <br />
-          tiện ích cần quyền truy cập các tính năng sau:
-        </p>
-
-        {/* Tips List */}
-        <div className="space-y-4 flex-1 mb-8">
-          {tips.map((tip, index) => (
-            <div key={index} className="border border-gray-200 rounded-lg overflow-hidden">
-              <button
-                onClick={() => setExpandedTip(expandedTip === index ? null : index)}
-                className="w-full p-6 text-left flex items-start space-x-4 hover:bg-gray-50 transition-colors"
-              >
-                <div className="text-3xl flex-shrink-0">{tip.icon}</div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-gray-900 mb-2 text-base">{tip.title}</h3>
-                  <p className="text-base text-gray-600 leading-relaxed">{tip.description}</p>
-                </div>
-                <div className="text-gray-400 text-xl flex-shrink-0">
-                  {expandedTip === index ? "−" : "+"}
-                </div>
-              </button>
-              
-              {expandedTip === index && (
-                <div className="px-6 pb-6">
-                  <div className="ml-16 p-4 bg-blue-50 rounded-lg">
-                    <p className="text-base text-blue-800 leading-relaxed">{tip.details}</p>
-                  </div>
-                </div>
-              )}
+        <div className="space-y-3">
+          {tips.map((tip) => (
+            <div
+              key={tip.title}
+              className="flex items-start gap-3 rounded-xl border border-gray-100 bg-gray-50 p-4 shadow-sm"
+            >
+              <div className="mt-1 h-2 w-2 rounded-full bg-blue-600" />
+              <div>
+                <p className="text-sm font-semibold text-gray-900">
+                  {tip.title}
+                </p>
+                <p className="text-sm text-gray-600">{tip.description}</p>
+              </div>
             </div>
           ))}
         </div>
 
-        {/* Buttons */}
-        <div className="flex space-x-4 mt-auto">
+        {errorMessage && (
+          <div className="rounded-lg border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {errorMessage}
+          </div>
+        )}
+
+        <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
           <Button
-            onClick={onBack}
+            type="button"
             variant="outline"
-            className="flex-1 h-12 text-base"
-            size="lg"
+            className="h-11 sm:w-32"
+            onClick={onBack}
           >
-            Hủy
+            Quay lại
           </Button>
           <Button
+            type="button"
+            className="h-11 bg-blue-700 text-white hover:bg-blue-800 sm:w-48"
             onClick={onComplete}
-            className="flex-1 bg-blue-500 hover:bg-blue-600 text-white h-12 text-base"
-            size="lg"
+            disabled={isLoading}
           >
-            Cho phép truy cập
+            {isLoading ? (
+              <span className="flex items-center gap-2">
+                <LoadingSpinner size="sm" className="text-white" />
+                Đang hoàn tất...
+              </span>
+            ) : (
+              "Hoàn tất & vào Dashboard"
+            )}
           </Button>
         </div>
       </div>

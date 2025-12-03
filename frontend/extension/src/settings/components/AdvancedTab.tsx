@@ -66,7 +66,7 @@ const AdvancedTab: React.FC<AdvancedTabProps> = ({
   vpnEnabled = false,
   onUpdateSecurity,
 }) => {
-  const [logLevel, setLogLevel] = useState<LogLevel>("info");
+  const [logLevel, setLogLevel] = useState<LogLevel>("debug");
   const [newFilter, setNewFilter] = useState("");
 
   const handleAddFilter = () => {
@@ -111,8 +111,32 @@ const AdvancedTab: React.FC<AdvancedTabProps> = ({
     },
   ];
 
+  const hardenedLogs: ActivityLog[] = [
+    {
+      id: "err-purchase",
+      timestamp: new Date().toISOString(),
+      level: "error",
+      message: "Thanh toán thất bại: không đủ tiền trong tài khoản",
+      details: "Purchase PRO plan bị từ chối do số dư không đủ",
+    },
+    {
+      id: "filter-sync",
+      timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
+      level: "info",
+      message: "Cập nhật bộ lọc thành công",
+      details: "Danh sách bộ lọc đã được đồng bộ với máy chủ",
+    },
+    {
+      id: "rtp-enabled",
+      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+      level: "info",
+      message: "Bảo vệ thời gian thực đã được bật",
+      details: "Người dùng đã bật bảo vệ thời gian thực",
+    },
+  ];
+
   const visibleLogs =
-    logLevel === "debug" ? activityLogs : activityLogs.filter((log) => log.level === logLevel);
+    logLevel === "debug" ? hardenedLogs : hardenedLogs.filter((log) => log.level === logLevel);
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-8" role="tabpanel" id="tabpanel-advanced" aria-labelledby="tab-advanced">

@@ -27,3 +27,6 @@ export { useSiteDetection } from "./useSiteDetection";
 // Utility hooks
 export { useDebounce, useDebouncedCallback } from "./useDebounce";
 export { useClickOutside } from "./useClickOutside";
+
+// Onboarding hooks
+export { useOnboardingFlow } from "./useOnboardingFlow";

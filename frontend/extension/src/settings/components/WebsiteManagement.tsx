@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { CheckCircle, XCircle, UploadCloud } from "lucide-react";
 
 import { readFromStorage, writeToStorage } from "../../core/storage";
 import { filterService, URLItem } from "../../services/filter.service";
@@ -108,13 +109,15 @@ const URLCard: React.FC<URLCardProps> = React.memo(({
   };
 
   const title = type === "whitelist" ? "White List" : "Blacklist";
-  const icon = type === "whitelist" ? "✅" : "🚫";
+  const Icon = type === "whitelist" ? CheckCircle : XCircle;
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center">
-          <span className="text-2xl mr-2" aria-hidden="true">{icon}</span>
+        <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+          <span className={`rounded-full p-1.5 ${type === "whitelist" ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600"}`} aria-hidden="true">
+            <Icon className="h-5 w-5" />
+          </span>
           {title} ({items.length})
         </h3>
       </div>
@@ -146,10 +149,7 @@ const URLCard: React.FC<URLCardProps> = React.memo(({
         {items.length === 0 ? (
           <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-gray-300 bg-[#f9fafb] p-6 text-center dark:border-gray-700 dark:bg-gray-800/60">
             <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-sm dark:bg-gray-700">
-              <svg className="h-7 w-7 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7a2 2 0 012-2h3.28a1 1 0 01.948.684l.894 2.683A1 1 0 0011 9h6a2 2 0 012 2v5a2 2 0 01-2 2H7a4 4 0 01-4-4V7z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7l3.553 2.13A2 2 0 007.894 9H21" />
-              </svg>
+              <UploadCloud className="h-7 w-7 text-gray-400" aria-hidden="true" />
             </div>
             <p className="text-sm font-semibold text-gray-900 dark:text-white">Danh sách trống</p>
             <p className="text-xs text-gray-600 dark:text-gray-300">Thêm website để quản lý truy cập</p>

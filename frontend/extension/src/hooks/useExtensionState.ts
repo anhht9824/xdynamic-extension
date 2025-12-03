@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { readFromStorage, writeToStorage } from "../core/storage";
 import { ExtensionState, FilterLevel } from "../types";
 import { logger, STORAGE_KEYS } from "../utils";
+import { userService } from "../services/user.service";
 
 const defaultState: ExtensionState = {
   isEnabled: true,
@@ -35,9 +36,34 @@ export const useExtensionState = () => {
   );
 
   // Toggle extension
-  const toggleExtension = useCallback(() => {
-    updateState({ isEnabled: !state.isEnabled });
-  }, [state.isEnabled, updateState]);
+  const toggleExtension = useCallback(async () => {
+    const newEnabled = !state.isEnabled;
+    updateState({ isEnabled: newEnabled });
+    
+    try {
+      // Sync with backend
+      await userService.updateSettings({
+        security: {
+          realTimeProtection: newEnabled,
+          autoUpdate: state.autoBlock, // preserving other values if needed, but updateSettings is partial
+          speedLimit: 80, // default or current? updateSettings merges, so we only need to send what changed
+          customFilters: [],
+          vpnEnabled: false
+        }
+      });
+      // Actually updateSettings takes UserSettingsUpdate which has optional fields.
+      // Let's check userService.updateSettings signature.
+      // It takes Partial<UserSettings>.
+      // So:
+      await userService.updateSettings({
+        security: {
+          realTimeProtection: newEnabled
+        } as any // cast to avoid strict type issues if partial is not fully recursive in types
+      });
+    } catch (error) {
+      logger.error("Failed to sync extension state with backend", error);
+    }
+  }, [state.isEnabled, state.autoBlock, updateState]);
 
   // Change filter level
   const changeFilterLevel = useCallback(

@@ -26,6 +26,10 @@ const OverviewTab: React.FC<OverviewTabProps> = ({
   const [settings, setSettings] = useState<SecuritySettings>(initialSettings);
   const [hasChanges, setHasChanges] = useState(false);
 
+  React.useEffect(() => {
+    setSettings(initialSettings);
+  }, [initialSettings]);
+
   const handleToggle = (key: keyof SecuritySettings) => {
     setSettings((prev) => ({ ...prev, [key]: !prev[key] }));
     setHasChanges(true);

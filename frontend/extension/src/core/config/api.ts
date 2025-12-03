@@ -73,6 +73,13 @@ export const API_ENDPOINTS = {
     PURCHASE: '/api/subscription/purchase',
     CANCEL: '/api/subscription/cancel',
   },
+
+  // Onboarding endpoints
+  ONBOARDING: {
+    STATE: '/api/onboarding/state',
+    PROGRESS: '/api/onboarding/progress',
+    COMPLETE: '/api/onboarding/complete',
+  },
 } as const;
 
 // API Response types

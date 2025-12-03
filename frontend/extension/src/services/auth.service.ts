@@ -1,4 +1,4 @@
-import { API_CONFIG } from '../core/config/api';
+import { API_CONFIG, API_ENDPOINTS } from '../core/config/api';
 import { readFromStorage, writeManyToStorage, removeFromStorage } from '../core/storage';
 import { STORAGE_KEYS } from '../utils';
 
@@ -23,6 +23,11 @@ export interface AuthResponse {
     email: string;
   };
   token: string;
+}
+
+export interface VerifyAccountPayload {
+  email: string;
+  code: string;
 }
 
 export class AuthService {
@@ -130,6 +135,54 @@ export class AuthService {
       return authResponse;
     } catch (error) {
       console.error('Google login error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Verify account with code (email/OTP)
+   */
+  async verifyAccount(payload: VerifyAccountPayload): Promise<void> {
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}${API_ENDPOINTS.AUTH.VERIFY}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      const error: any = new Error(errorData.detail || 'Verification failed');
+      error.status = response.status;
+      throw error;
+    }
+  }
+
+  /**
+   * Request or resend verification code
+   */
+  async requestVerificationCode(email: string): Promise<void> {
+    const response = await fetch(
+      `${API_CONFIG.BASE_URL}${API_ENDPOINTS.AUTH.VERIFY}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, action: 'resend' }),
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      const error: any = new Error(
+        errorData.detail || 'Failed to send verification code'
+      );
+      error.status = response.status;
       throw error;
     }
   }

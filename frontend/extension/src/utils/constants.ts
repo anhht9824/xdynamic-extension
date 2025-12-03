@@ -34,7 +34,7 @@ export const DEFAULTS = {
   BLOCKED_TODAY: 0,
   BLOCKED_COUNT: 681,
   PROTECTION_ENABLED: true,
-  AUTO_UPDATE_ENABLED: false,
+  AUTO_UPDATE_ENABLED: true,
 } as const;
 
 // API configuration
