@@ -556,7 +556,7 @@ const UserHub: React.FC = () => {
 
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex">
+    <div className="min-h-screen bg-background flex">
       {/* Sidebar Navigation */}
       <SettingsSidebar
         activeSection={activeTab}
@@ -568,18 +568,15 @@ const UserHub: React.FC = () => {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-h-screen">
         {/* Top Header with Profile & Search */}
-        <header className="sticky top-0 z-40 backdrop-blur bg-white/80 dark:bg-slate-900/80 border-b border-slate-200/60 dark:border-slate-800/60">
-          {/* Profile Section */}
-          <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-900 to-blue-900 text-slate-50 px-4 sm:px-6 py-6">
-            <div className="absolute inset-0 opacity-30">
-              <div className="absolute -right-10 -top-10 h-48 w-48 rounded-full bg-blue-500 blur-3xl" />
-              <div className="absolute -left-16 bottom-0 h-40 w-40 rounded-full bg-cyan-400 blur-3xl" />
-            </div>
-            <div className="relative max-w-6xl mx-auto">
+        {/* Top Header with Profile & Search */}
+        <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-border">
+          {/* Profile Section - Minimalist */}
+          <div className="px-4 sm:px-6 py-4">
+            <div className="max-w-6xl mx-auto">
               {/* Mobile Menu Button */}
               <button
                 onClick={() => setIsMobileMenuOpen(true)}
-                className="lg:hidden mb-4 p-2 bg-white/10 border border-white/20 hover:bg-white/20 text-white rounded-lg transition-colors"
+                className="lg:hidden mb-4 p-2 text-muted-foreground hover:bg-gray-100 rounded-lg transition-colors"
                 aria-label="Mở menu"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -591,7 +588,7 @@ const UserHub: React.FC = () => {
                 <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4">
                   {/* Avatar */}
                   <div className="relative group">
-                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white/10 border border-white/10 p-1 shadow-lg">
+                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gray-100 border border-gray-200 p-0.5 shadow-sm overflow-hidden">
                       {userProfile.avatar ? (
                         <img
                           src={userProfile.avatar}
@@ -599,29 +596,29 @@ const UserHub: React.FC = () => {
                           className="w-full h-full rounded-full object-cover"
                         />
                       ) : (
-                        <div className="w-full h-full rounded-full bg-gradient-to-br from-blue-400 to-indigo-600 flex items-center justify-center text-white text-xl sm:text-2xl font-bold">
+                        <div className="w-full h-full rounded-full bg-primary/10 flex items-center justify-center text-primary text-lg font-bold">
                           {userProfile.fullName.charAt(0).toUpperCase()}
                         </div>
                       )}
                     </div>
                     <button
                       onClick={handleEditProfile}
-                      className="absolute bottom-0 right-0 w-6 h-6 sm:w-7 sm:h-7 bg-white text-blue-700 border border-white/60 rounded-full shadow-lg flex items-center justify-center hover:bg-blue-50 transition-colors opacity-0 group-hover:opacity-100"
+                      className="absolute bottom-0 right-0 w-5 h-5 bg-white text-primary border border-gray-200 rounded-full shadow-sm flex items-center justify-center hover:bg-gray-50 transition-colors opacity-0 group-hover:opacity-100"
                       aria-label="Chỉnh sửa avatar"
                     >
-                      <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                       </svg>
                     </button>
                   </div>
 
                   {/* User Info */}
-                  <div className="text-white text-center sm:text-left">
-                    <div className="flex flex-col sm:flex-row items-center space-y-1 sm:space-y-0 sm:space-x-2 mb-1">
-                      <h2 className="text-xl sm:text-2xl font-bold">{userProfile.fullName}</h2>
+                  <div className="text-center sm:text-left">
+                    <div className="flex flex-col sm:flex-row items-center space-y-1 sm:space-y-0 sm:space-x-2">
+                      <h2 className="text-lg sm:text-xl font-bold text-foreground">{userProfile.fullName}</h2>
                       <button
                         onClick={handleEditProfile}
-                        className="p-1 hover:bg-white/10 rounded transition-colors"
+                        className="p-1 text-muted-foreground hover:text-primary hover:bg-gray-100 rounded transition-colors"
                         aria-label="Chỉnh sửa hồ sơ"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -629,10 +626,12 @@ const UserHub: React.FC = () => {
                         </svg>
                       </button>
                     </div>
-                    <p className="text-blue-100 mb-2 text-sm sm:text-base break-all sm:break-normal">{userProfile.email}</p>
-                    <span className="inline-block px-3 py-1 rounded-full text-sm font-semibold bg-white/10 border border-white/15 text-white backdrop-blur">
-                      {userProfile.plan}
-                    </span>
+                    <div className="flex items-center gap-2 justify-center sm:justify-start">
+                      <p className="text-muted-foreground text-sm">{userProfile.email}</p>
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary border border-primary/20">
+                        {userProfile.plan}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
@@ -641,9 +640,9 @@ const UserHub: React.FC = () => {
                   {userProfile.isAdmin && (
                     <button
                       onClick={handleOpenAdminDashboard}
-                      className="w-full sm:w-auto px-4 py-2 bg-white/10 border border-white/20 hover:bg-white/20 text-white rounded-lg transition-colors flex items-center justify-center space-x-2 text-sm sm:text-base shadow-sm"
+                      className="w-full sm:w-auto px-4 py-2 bg-white border border-gray-200 hover:bg-gray-50 text-foreground rounded-full transition-colors flex items-center justify-center space-x-2 text-sm font-medium shadow-sm"
                     >
-                      <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6l8 4v4c0 4-4 7-8 8-4-1-8-4-8-8v-4l8-4z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.5 12.5l2 2 3-3.5" />
                       </svg>
@@ -652,18 +651,18 @@ const UserHub: React.FC = () => {
                   )}
                   <button
                     onClick={handleUpgrade}
-                    className="w-full sm:w-auto px-4 py-2 bg-white/10 border border-white/20 hover:bg-white/20 text-white rounded-lg transition-colors flex items-center justify-center space-x-2 text-sm sm:text-base shadow-sm"
+                    className="w-full sm:w-auto px-4 py-2 bg-primary hover:bg-blue-700 text-white rounded-full transition-colors flex items-center justify-center space-x-2 text-sm font-medium shadow-md shadow-blue-900/10"
                   >
-                    <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
                     <span>Nâng cấp</span>
                   </button>
                   <button
                     onClick={handleLogout}
-                    className="w-full sm:w-auto px-4 py-2 bg-white/10 border border-white/20 hover:bg-white/20 text-white rounded-lg transition-colors flex items-center justify-center space-x-2 text-sm sm:text-base"
+                    className="w-full sm:w-auto px-4 py-2 bg-white border border-gray-200 hover:bg-gray-50 text-muted-foreground hover:text-red-600 rounded-full transition-colors flex items-center justify-center space-x-2 text-sm font-medium shadow-sm"
                   >
-                    <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                     </svg>
                     <span>Đăng xuất</span>
@@ -674,8 +673,8 @@ const UserHub: React.FC = () => {
           </div>
 
           {/* Search & Breadcrumb Bar */}
-          <div className="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-            <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4">
+          <div className="bg-white/50 backdrop-blur-sm border-b border-border/50">
+            <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 {/* Breadcrumb */}
                 <SettingsBreadcrumb

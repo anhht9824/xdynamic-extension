@@ -69,7 +69,7 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
   };
 
   const cardBase =
-    "bg-white/90 dark:bg-slate-900/85 border border-slate-200/80 dark:border-slate-800/80 shadow-sm backdrop-blur";
+    "bg-card/90 border-r border-border shadow-sm backdrop-blur";
 
   return (
     <>
@@ -96,9 +96,9 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
         aria-label="Settings Navigation"
         >
           {/* Sidebar Header */}
-        <div className="sticky top-0 bg-white/90 dark:bg-slate-900/90 z-10 p-4 border-b border-slate-200/80 dark:border-slate-800/80 backdrop-blur">
+        <div className="sticky top-0 bg-card/90 z-10 p-4 border-b border-border backdrop-blur">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+            <h2 className="text-lg font-bold text-foreground">
               Cài đặt
             </h2>
             <button
@@ -136,8 +136,8 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                   text-left transition-all duration-200
                   ${
                     isActive
-                      ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 shadow-sm"
-                      : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      ? "bg-primary/10 text-primary shadow-sm"
+                      : "text-muted-foreground hover:bg-muted"
                   }
                 `}
                 role="tab"
@@ -147,21 +147,21 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                 <div
                   className={`
                     flex-shrink-0 mt-0.5
-                    ${isActive ? "text-blue-600 dark:text-blue-400" : "text-gray-400"}
+                    ${isActive ? "text-primary" : "text-muted-foreground"}
                   `}
                 >
                   {section.icon}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-medium text-sm">{section.label}</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  <div className="text-xs text-muted-foreground mt-0.5">
                     {section.description}
                   </div>
                 </div>
                 {isActive && (
                   <div className="flex-shrink-0">
                     <svg
-                      className="w-4 h-4 text-blue-600 dark:text-blue-400"
+                      className="w-4 h-4 text-primary"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -181,11 +181,11 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
         </nav>
 
         {/* Sidebar Footer - Help Section */}
-        <div className="sticky bottom-0 p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-          <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3">
+        <div className="sticky bottom-0 p-4 border-t border-border bg-card">
+          <div className="bg-primary/5 rounded-lg p-3">
             <div className="flex items-center gap-2 mb-2">
               <svg
-                className="w-4 h-4 text-blue-600 dark:text-blue-400"
+                className="w-4 h-4 text-primary"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -197,14 +197,14 @@ const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                   d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                 />
               </svg>
-              <span className="text-sm font-medium text-blue-900 dark:text-blue-300">
+              <span className="text-sm font-medium text-primary">
                 Cần trợ giúp?
               </span>
             </div>
-            <p className="text-xs text-blue-700 dark:text-blue-400 mb-2">
+            <p className="text-xs text-primary/80 mb-2">
               Tìm hiểu thêm về các tính năng và cài đặt
             </p>
-            <button className="w-full px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded hover:bg-blue-700 transition-colors">
+            <button className="w-full px-3 py-1.5 bg-primary text-primary-foreground text-xs font-medium rounded hover:bg-primary/90 transition-colors">
               Xem hướng dẫn
             </button>
           </div>

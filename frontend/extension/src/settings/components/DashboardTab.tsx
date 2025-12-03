@@ -27,7 +27,7 @@ interface DashboardTabProps {
   onToggleAutoUpdate: (enabled: boolean) => void;
 }
 
-const surface = "rounded-2xl border border-slate-200/80 bg-white shadow-sm";
+const surface = "rounded-lg border border-border bg-card shadow-sm";
 
 const DashboardTab: React.FC<DashboardTabProps> = ({
   metrics,
@@ -85,7 +85,7 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
       <div className="space-y-8">
         <AnimatedCard
           delay={0}
-          className="w-full rounded-2xl border border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-6 sm:p-8 shadow-sm"
+          className="w-full rounded-2xl border border-primary/20 bg-gradient-to-r bg-primary/5 to-primary/10 p-6 sm:p-8 shadow-sm"
         >
           <div className="flex flex-col gap-6">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -120,7 +120,7 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
                   disabled={refreshing}
                   className="p-3 !bg-white rounded-xl shadow-md hover:shadow-lg disabled:opacity-50"
                 >
-                  <RefreshCw className={`h-5 w-5 text-blue-600 ${refreshing ? "animate-spin" : ""}`} />
+                  <RefreshCw className={`h-5 w-5 text-primary ${refreshing ? "animate-spin" : ""}`} />
                 </RippleButton>
               </div>
             </div>
@@ -134,7 +134,7 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
                 </div>
               </div>
               <div className="flex items-center gap-3 rounded-xl bg-white/80 p-3 shadow-sm">
-                <HardDrive className="h-9 w-9 rounded-full bg-blue-50 p-2 text-blue-600" />
+                <HardDrive className="h-9 w-9 rounded-full bg-primary/10 p-2 text-primary" />
                 <div>
                   <p className="text-xs text-gray-500">Dung lượng</p>
                   <p className="text-lg font-semibold text-gray-900">
@@ -169,7 +169,7 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
               <div className="ml-4 flex-1">
                 <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
                   <div
-                    className="h-full rounded-full bg-blue-500 transition-all duration-500"
+                    className="h-full rounded-full bg-primary/100 transition-all duration-500"
                     style={{ width: `${metrics.usagePercentage}%` }}
                   />
                 </div>
@@ -220,10 +220,10 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
           <div className={`${surface} p-6`}>
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <ShieldCheck className="h-5 w-5 text-blue-600" />
+                <ShieldCheck className="h-5 w-5 text-primary" />
                 <h3 className="text-lg font-semibold text-gray-900">Cài đặt bảo vệ</h3>
               </div>
-              <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">Tùy chỉnh nhanh</span>
+              <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">Tùy chỉnh nhanh</span>
             </div>
 
             <div className="space-y-4">
@@ -254,11 +254,11 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
               <div className="rounded-xl bg-slate-50 p-4">
                 <div className="mb-3 flex items-center justify-between">
                   <p className="text-sm font-semibold text-gray-900">Giới hạn tốc độ</p>
-                  <span className="text-sm font-semibold text-blue-600">{metrics.speedLimit}%</span>
+                  <span className="text-sm font-semibold text-primary">{metrics.speedLimit}%</span>
                 </div>
                 <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200">
                   <div
-                    className="h-full rounded-full bg-blue-600 transition-all duration-300"
+                    className="h-full rounded-full bg-primary transition-all duration-300"
                     style={{ width: `${metrics.speedLimit}%` }}
                   />
                 </div>
@@ -302,7 +302,7 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
           <div className={`${surface} p-6`}>
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-lg font-semibold text-gray-900">Thao tác nhanh</h3>
-              <span className="text-xs font-semibold text-blue-600">Ưu tiên</span>
+              <span className="text-xs font-semibold text-primary">Ưu tiên</span>
             </div>
 
             <div className="mb-4 rounded-xl border border-purple-200 bg-gradient-to-br from-purple-50 to-blue-50 p-4">
@@ -322,7 +322,7 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
                 variant="primary"
                 size="lg"
                 onClick={onUpgrade}
-                className="w-full !bg-blue-600 !text-white hover:!bg-blue-700"
+                className="w-full !bg-primary !text-white hover:!bg-blue-700"
               >
                 <Sparkles className="h-5 w-5" />
                 <span className="font-semibold">Nâng cấp ngay</span>
