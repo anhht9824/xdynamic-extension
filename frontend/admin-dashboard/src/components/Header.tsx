@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Search, Bell, User, ChevronDown, LogOut, Settings, HelpCircle } from 'lucide-react';
+import { Search, Bell, ChevronDown, LogOut, Settings, HelpCircle } from 'lucide-react';
 import { useClickOutside } from '../hooks/useClickOutside';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -21,20 +21,20 @@ export const Header: React.FC = () => {
   return (
     <header className="fixed top-0 left-64 right-0 h-16 bg-white border-b border-gray-200 z-10 shadow-sm">
       <div className="h-full px-6 flex items-center justify-between">
-        {/* Search Bar */}
+        {/* Left: Breadcrumb/Search */}
         <div className="flex-1 max-w-2xl">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
-              placeholder="Search users, content, reports..."
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+              placeholder="Search..."
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-700 focus:border-transparent transition-all"
             />
           </div>
         </div>
 
-        {/* Right Section */}
-        <div className="flex items-center space-x-2 ml-6">
+        {/* Right: Actions */}
+        <div className="flex items-center space-x-1 ml-6">
           {/* Help */}
           <button 
             className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
@@ -59,7 +59,7 @@ export const Header: React.FC = () => {
             {showNotifications && (
               <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 py-2 animate-fade-in">
                 <div className="px-4 py-3 border-b border-gray-200">
-                  <h3 className="font-semibold text-gray-900">Notifications</h3>
+                  <h3 className="font-semibold text-gray-900 text-sm">Notifications</h3>
                   <p className="text-xs text-gray-500 mt-0.5">You have 3 unread messages</p>
                 </div>
                 <div className="max-h-96 overflow-y-auto">
@@ -74,7 +74,7 @@ export const Header: React.FC = () => {
                     >
                       <div className="flex items-start gap-3">
                         {notification.unread && (
-                          <span className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></span>
+                          <span className="w-2 h-2 bg-primary-700 rounded-full mt-2 flex-shrink-0"></span>
                         )}
                         <div className="flex-1 min-w-0">
                           <p className={`text-sm ${notification.unread ? 'font-semibold text-gray-900' : 'text-gray-700'}`}>
@@ -87,7 +87,7 @@ export const Header: React.FC = () => {
                   ))}
                 </div>
                 <div className="px-4 py-3 border-t border-gray-200">
-                  <button className="text-sm text-primary hover:text-primary-600 font-medium">
+                  <button className="text-sm text-primary-700 hover:text-primary-800 font-medium">
                     View all notifications
                   </button>
                 </div>
@@ -99,15 +99,13 @@ export const Header: React.FC = () => {
           <div className="relative" ref={profileRef}>
             <button
               onClick={() => setShowProfileMenu(!showProfileMenu)}
-              className="flex items-center space-x-3 p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              className="flex items-center space-x-2 px-3 py-2 hover:bg-gray-100 rounded-lg transition-colors"
               aria-expanded={showProfileMenu}
             >
-              <div className="w-8 h-8 bg-gradient-to-br from-primary to-primary-600 rounded-full flex items-center justify-center shadow-sm">
-                <User className="w-5 h-5 text-white" />
-              </div>
-              <div className="text-left hidden md:block">
-                <p className="text-sm font-medium text-gray-900">{user?.full_name || 'Admin User'}</p>
-                <p className="text-xs text-gray-500">{user?.email || 'admin@xdynamic.com'}</p>
+              <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
+                <span className="text-xs font-semibold text-primary-700">
+                  {user?.full_name?.split(' ').map(n => n[0]).join('') || 'AU'}
+                </span>
               </div>
               <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${showProfileMenu ? 'rotate-180' : ''}`} />
             </button>
@@ -119,10 +117,6 @@ export const Header: React.FC = () => {
                   <p className="text-sm font-medium text-gray-900">{user?.full_name || 'Admin User'}</p>
                   <p className="text-xs text-gray-500 mt-0.5">{user?.email || 'admin@xdynamic.com'}</p>
                 </div>
-                <button className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2 transition-colors">
-                  <User className="w-4 h-4" />
-                  <span>My Profile</span>
-                </button>
                 <button className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-2 transition-colors">
                   <Settings className="w-4 h-4" />
                   <span>Settings</span>

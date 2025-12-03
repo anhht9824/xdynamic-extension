@@ -22,11 +22,11 @@
   }
 
   .btn-primary {
-    @apply bg-primary text-white hover:bg-primary-600 focus:ring-primary-500 shadow-sm hover:shadow-md;
+    @apply bg-primary-700 text-white hover:bg-primary-800 focus:ring-primary-700 shadow-sm hover:shadow-md;
   }
 
   .btn-secondary {
-    @apply bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 focus:ring-primary-500 shadow-sm hover:shadow;
+    @apply bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 focus:ring-primary-700 shadow-sm hover:shadow;
   }
 
   .btn-danger {
@@ -42,7 +42,7 @@
   }
 
   .input {
-    @apply w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all;
+    @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-700 focus:border-transparent transition-all;
   }
 
   .badge {
