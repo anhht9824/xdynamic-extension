@@ -35,8 +35,10 @@ export type PlanType = "free" | "plus" | "pro";
 
 export interface PlanFeature {
   id: string;
-  text: string;
+  text?: string;
   included: boolean;
+  vi?: string;
+  en?: string;
 }
 
 export interface Plan {
@@ -121,6 +123,7 @@ export interface UserProfile {
   fullName: string;
   email: string;
   avatar?: string;
+  phone?: string;
   plan: string;
   planType: PlanType;
   credits?: number;

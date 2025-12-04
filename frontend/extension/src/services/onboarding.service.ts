@@ -50,7 +50,7 @@ export class OnboardingService {
   async markStep(
     step: OnboardingStepId,
     status: "pending" | "completed" | "skipped" = "completed",
-    data?: Record<string, unknown>
+    data?: unknown
   ): Promise<void> {
     try {
       await apiService.post(API_ENDPOINTS.ONBOARDING.PROGRESS, {
