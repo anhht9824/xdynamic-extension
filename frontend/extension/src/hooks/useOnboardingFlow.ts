@@ -312,7 +312,7 @@ export const useOnboardingFlow = (steps: OnboardingStepId[]) => {
           currentStep: "permissions",
         };
 
-        await onboardingService.markStep("security", "completed", preferences);
+        await onboardingService.markStep("security", "completed", preferences as unknown as Record<string, unknown>);
         await persistState(nextState);
         setAction({ name: "preferences", loading: false });
         return true;

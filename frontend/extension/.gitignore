@@ -1,0 +1,35 @@
+# Ignore development environment files
+.env.local
+.env.development
+
+# Keep production environment (might be needed for rebuilds)
+# .env.production
+
+# Node modules
+node_modules/
+
+# Build outputs
+dist/
+
+# ZIP distribution file
+*.zip
+
+# Editor directories
+.vscode/
+.idea/
+
+# Logs
+*.log
+npm-debug.log*
+
+# TypeScript
+*.tsbuildinfo
+
+# Temporary files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Source maps (if any)
+*.map

@@ -2,10 +2,26 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { resolve } from "path";
 import { crx } from "@crxjs/vite-plugin";
+import { copyFileSync } from "fs";
 import manifest from "./manifest";
 
 export default defineConfig({
-  plugins: [react(), crx({ manifest })],
+  plugins: [
+    react(), 
+    crx({ manifest }),
+    // Copy installation instructions to dist after build
+    {
+      name: 'copy-install-readme',
+      closeBundle() {
+        try {
+          copyFileSync('INSTALL_README.txt', 'dist/README.txt');
+          console.log('✓ Copied installation instructions to dist/');
+        } catch (err) {
+          console.warn('Could not copy README:', err);
+        }
+      }
+    }
+  ],
 
   resolve: {
     alias: {

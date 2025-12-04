@@ -3,7 +3,7 @@ import { defineManifest } from "@crxjs/vite-plugin";
 export default defineManifest({
   manifest_version: 3,
   name: "XDynamic Extension",
-  version: "0.0.1",
+  version: "1.0.0",
   description:
     "An extension for NSFW content detection and filtering for safer browsing",
 
@@ -19,7 +19,6 @@ export default defineManifest({
   host_permissions: [
     "https://*/*", 
     "http://*/*",
-    "http://localhost:8000/*",  // Local backend API
   ],
 
   background: {

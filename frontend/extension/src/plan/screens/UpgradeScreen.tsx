@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Button } from "../../components/ui";
-import { Plan, PlanType } from "../../types/common";
+import { Plan, PlanType, PlanFeature } from "../../types/common";
 import { useToast } from "../../hooks/useToast";
 import { subscriptionService } from "../../services/subscription.service";
 import { useLanguageContext } from "../../providers/LanguageProvider";
@@ -10,7 +10,7 @@ interface UpgradeScreenProps {
   onBack: () => void;
 }
 
-type FeatureCopy = { id: string; included: boolean; vi: string; en: string };
+type FeatureCopy = PlanFeature & { vi: string; en: string };
 
 const UpgradeScreen: React.FC<UpgradeScreenProps> = ({ onSelectPlan, onBack }) => {
   const { language } = useLanguageContext();
@@ -43,15 +43,15 @@ const UpgradeScreen: React.FC<UpgradeScreenProps> = ({ onSelectPlan, onBack }) =
       currency: "đ",
       period: "month",
       features: [
-        { id: "f1", included: true, vi: "Chặn nội dung cơ bản", en: "Basic content blocking" },
-        { id: "f2", included: true, vi: "Báo cáo hàng tháng", en: "Monthly reports" },
-        { id: "f3", included: true, vi: "Hỗ trợ email", en: "Email support" },
-        { id: "f4", included: false, vi: "Phát hiện nâng cao", en: "Advanced detection" },
-        { id: "f5", included: false, vi: "Bảo vệ streaming video", en: "Video streaming protection" },
-        { id: "f6", included: false, vi: "Hỗ trợ ưu tiên 24/7", en: "Priority support 24/7" },
-        { id: "f7", included: false, vi: "Báo cáo chi tiết thời gian thực", en: "Real-time detailed reports" },
-        { id: "f8", included: false, vi: "Tùy chỉnh bộ lọc nâng cao", en: "Advanced filter customization" },
-      ],
+        { id: "f1", text: "Basic content blocking", included: true, vi: "Chặn nội dung cơ bản", en: "Basic content blocking" },
+        { id: "f2", text: "Monthly reports", included: true, vi: "Báo cáo hàng tháng", en: "Monthly reports" },
+        { id: "f3", text: "Email support", included: true, vi: "Hỗ trợ email", en: "Email support" },
+        { id: "f4", text: "Advanced detection", included: false, vi: "Phát hiện nâng cao", en: "Advanced detection" },
+        { id: "f5", text: "Video streaming protection", included: false, vi: "Bảo vệ streaming video", en: "Video streaming protection" },
+        { id: "f6", text: "Priority support 24/7", included: false, vi: "Hỗ trợ ưu tiên 24/7", en: "Priority support 24/7" },
+        { id: "f7", text: "Real-time detailed reports", included: false, vi: "Báo cáo chi tiết thời gian thực", en: "Real-time detailed reports" },
+        { id: "f8", text: "Advanced filter customization", included: false, vi: "Tùy chỉnh bộ lọc nâng cao", en: "Advanced filter customization" },
+      ] as FeatureCopy[],
     },
     {
       id: "plan-plus",
@@ -65,15 +65,15 @@ const UpgradeScreen: React.FC<UpgradeScreenProps> = ({ onSelectPlan, onBack }) =
       badge: tr("Phổ biến nhất", "Most popular"),
       trialDays: 7,
       features: [
-        { id: "f1", included: true, vi: "Chặn nội dung cơ bản", en: "Basic content blocking" },
-        { id: "f2", included: true, vi: "Báo cáo hàng tháng", en: "Monthly reports" },
-        { id: "f3", included: true, vi: "Hỗ trợ email", en: "Email support" },
-        { id: "f4", included: true, vi: "Phát hiện nâng cao", en: "Advanced detection" },
-        { id: "f5", included: true, vi: "Bảo vệ streaming video", en: "Video streaming protection" },
-        { id: "f6", included: false, vi: "Hỗ trợ ưu tiên 24/7", en: "Priority support 24/7" },
-        { id: "f7", included: false, vi: "Báo cáo chi tiết thời gian thực", en: "Real-time detailed reports" },
-        { id: "f8", included: false, vi: "Tùy chỉnh bộ lọc nâng cao", en: "Advanced filter customization" },
-      ],
+        { id: "f1", text: "Basic content blocking", included: true, vi: "Chặn nội dung cơ bản", en: "Basic content blocking" },
+        { id: "f2", text: "Monthly reports", included: true, vi: "Báo cáo hàng tháng", en: "Monthly reports" },
+        { id: "f3", text: "Email support", included: true, vi: "Hỗ trợ email", en: "Email support" },
+        { id: "f4", text: "Advanced detection", included: true, vi: "Phát hiện nâng cao", en: "Advanced detection" },
+        { id: "f5", text: "Video streaming protection", included: true, vi: "Bảo vệ streaming video", en: "Video streaming protection" },
+        { id: "f6", text: "Priority support 24/7", included: false, vi: "Hỗ trợ ưu tiên 24/7", en: "Priority support 24/7" },
+        { id: "f7", text: "Real-time detailed reports", included: false, vi: "Báo cáo chi tiết thời gian thực", en: "Real-time detailed reports" },
+        { id: "f8", text: "Advanced filter customization", included: false, vi: "Tùy chỉnh bộ lọc nâng cao", en: "Advanced filter customization" },
+      ] as FeatureCopy[],
     },
     {
       id: "plan-pro",
@@ -85,15 +85,15 @@ const UpgradeScreen: React.FC<UpgradeScreenProps> = ({ onSelectPlan, onBack }) =
       period: "month",
       trialDays: 14,
       features: [
-        { id: "f1", included: true, vi: "Chặn nội dung cơ bản", en: "Basic content blocking" },
-        { id: "f2", included: true, vi: "Báo cáo hàng tháng", en: "Monthly reports" },
-        { id: "f3", included: true, vi: "Hỗ trợ email", en: "Email support" },
-        { id: "f4", included: true, vi: "Phát hiện nâng cao", en: "Advanced detection" },
-        { id: "f5", included: true, vi: "Bảo vệ streaming video", en: "Video streaming protection" },
-        { id: "f6", included: true, vi: "Hỗ trợ ưu tiên 24/7", en: "Priority support 24/7" },
-        { id: "f7", included: true, vi: "Báo cáo chi tiết thời gian thực", en: "Real-time detailed reports" },
-        { id: "f8", included: true, vi: "Tùy chỉnh bộ lọc nâng cao", en: "Advanced filter customization" },
-      ],
+        { id: "f1", text: "Basic content blocking", included: true, vi: "Chặn nội dung cơ bản", en: "Basic content blocking" },
+        { id: "f2", text: "Monthly reports", included: true, vi: "Báo cáo hàng tháng", en: "Monthly reports" },
+        { id: "f3", text: "Email support", included: true, vi: "Hỗ trợ email", en: "Email support" },
+        { id: "f4", text: "Advanced detection", included: true, vi: "Phát hiện nâng cao", en: "Advanced detection" },
+        { id: "f5", text: "Video streaming protection", included: true, vi: "Bảo vệ streaming video", en: "Video streaming protection" },
+        { id: "f6", text: "Priority support 24/7", included: true, vi: "Hỗ trợ ưu tiên 24/7", en: "Priority support 24/7" },
+        { id: "f7", text: "Real-time detailed reports", included: true, vi: "Báo cáo chi tiết thời gian thực", en: "Real-time detailed reports" },
+        { id: "f8", text: "Advanced filter customization", included: true, vi: "Tùy chỉnh bộ lọc nâng cao", en: "Advanced filter customization" },
+      ] as FeatureCopy[],
     },
   ];
 
@@ -284,7 +284,7 @@ const UpgradeScreen: React.FC<UpgradeScreenProps> = ({ onSelectPlan, onBack }) =
                               </svg>
                             </div>
                           )}
-                          <span className={`text-sm ${feature.included ? "text-foreground" : "text-muted-foreground"}`}>{tr(feature.vi, feature.en)}</span>
+                          <span className={`text-sm ${feature.included ? "text-foreground" : "text-muted-foreground"}`}>{tr((feature as FeatureCopy).vi, (feature as FeatureCopy).en)}</span>
                         </div>
                       ))}
                     </div>

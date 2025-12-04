@@ -7,6 +7,8 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "build:prod": "NODE_ENV=production tsc && vite build",
+    "build:production": "tsc && vite build --mode production",
+    "zip": "npm run build:production && cd dist && zip -r ../xdynamic-extension.zip .",
     "preview": "vite preview",
     "type-check": "tsc --noEmit",
     "lint": "eslint src --ext .ts,.tsx --max-warnings 0",

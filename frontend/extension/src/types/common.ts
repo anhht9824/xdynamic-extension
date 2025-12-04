@@ -120,6 +120,7 @@ export interface UserProfile {
   id: string;
   fullName: string;
   email: string;
+  phone?: string;
   avatar?: string;
   plan: string;
   planType: PlanType;

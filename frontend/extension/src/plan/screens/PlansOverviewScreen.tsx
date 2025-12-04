@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { logger } from "../../utils";
 import { Button } from "../../components/ui";
 import { UserPlan } from "../../types/common";
-// import { planService } from "../../services/plan.service"; // Replaced by subscriptionService
+import { subscriptionService } from "../../services";
 
 interface PlansOverviewScreenProps {
   onNavigateToUpgrade: () => void;
@@ -22,7 +22,28 @@ const PlansOverviewScreen: React.FC<PlansOverviewScreenProps> = ({
   useEffect(() => {
     const fetchPlan = async () => {
       try {
-        const plan = await planService.getCurrentPlan();
+        const subscription = await subscriptionService.getCurrentSubscription();
+        // Map subscription to UserPlan format
+        const plan: UserPlan = {
+          id: subscription.id.toString(),
+          userId: subscription.id.toString(),
+          plan: {
+            id: `plan-${subscription.plan}`,
+            type: subscription.plan,
+            name: subscription.plan.toUpperCase(),
+            nameVi: subscription.plan === 'free' ? 'Miễn phí' : 
+                    subscription.plan === 'plus' ? 'Plus' : 'Pro',
+            price: subscription.plan === 'free' ? 0 : 
+                   subscription.plan === 'plus' ? 99000 : 299000,
+            currency: 'đ',
+            period: 'month',
+            features: [],
+          },
+          startDate: subscription.created_at,
+          endDate: subscription.expires_at || '',
+          status: subscription.status === 'active' ? 'active' : 'expired',
+          autoRenew: false,
+        };
         setCurrentPlan(plan);
       } catch (error) {
         logger.error("Failed to fetch current plan:", error);

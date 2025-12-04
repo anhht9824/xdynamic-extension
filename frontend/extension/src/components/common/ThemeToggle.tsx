@@ -57,7 +57,8 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({
   if (variant === "cycle") {
     const cycleTheme = () => {
       const themes = ["light", "dark"] as const;
-      const currentIndex = themes.indexOf(theme);
+      const currentTheme = theme === "system" ? "light" : theme;
+      const currentIndex = themes.indexOf(currentTheme);
       const nextIndex = (currentIndex + 1) % themes.length;
       changeTheme(themes[nextIndex]);
     };
