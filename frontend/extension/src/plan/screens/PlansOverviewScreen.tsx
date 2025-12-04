@@ -9,6 +9,66 @@ interface PlansOverviewScreenProps {
   onBack: () => void;
 }
 
+const PLAN_CATALOG: Record<PlanType, Plan> = {
+  free: {
+    id: "plan-free",
+    type: "free",
+    name: "Basic Free",
+    nameVi: "Miễn phí",
+    price: 0,
+    currency: "đ",
+    period: "month",
+    features: [
+      { id: "f1", included: true, text: "Basic content blocking" },
+      { id: "f2", included: true, text: "Monthly reports" },
+      { id: "f3", included: true, text: "Email support" },
+      { id: "f4", included: false, text: "Advanced detection" },
+      { id: "f5", included: false, text: "Video streaming protection" },
+      { id: "f6", included: false, text: "Priority support 24/7" },
+      { id: "f7", included: false, text: "Real-time detailed reports" },
+      { id: "f8", included: false, text: "Advanced filter customization" },
+    ],
+  },
+  plus: {
+    id: "plan-plus",
+    type: "plus",
+    name: "Dynamic Plus",
+    nameVi: "Plus",
+    price: 50000,
+    currency: "đ",
+    period: "month",
+    features: [
+      { id: "f1", included: true, text: "Basic content blocking" },
+      { id: "f2", included: true, text: "Monthly reports" },
+      { id: "f3", included: true, text: "Email support" },
+      { id: "f4", included: true, text: "Advanced detection" },
+      { id: "f5", included: true, text: "Video streaming protection" },
+      { id: "f6", included: false, text: "Priority support 24/7" },
+      { id: "f7", included: false, text: "Real-time detailed reports" },
+      { id: "f8", included: false, text: "Advanced filter customization" },
+    ],
+  },
+  pro: {
+    id: "plan-pro",
+    type: "pro",
+    name: "Dynamic Pro",
+    nameVi: "Pro",
+    price: 100000,
+    currency: "đ",
+    period: "month",
+    features: [
+      { id: "f1", included: true, text: "Basic content blocking" },
+      { id: "f2", included: true, text: "Monthly reports" },
+      { id: "f3", included: true, text: "Email support" },
+      { id: "f4", included: true, text: "Advanced detection" },
+      { id: "f5", included: true, text: "Video streaming protection" },
+      { id: "f6", included: true, text: "Priority support 24/7" },
+      { id: "f7", included: true, text: "Real-time detailed reports" },
+      { id: "f8", included: true, text: "Advanced filter customization" },
+    ],
+  },
+};
+
 const PlansOverviewScreen: React.FC<PlansOverviewScreenProps> = ({
   onNavigateToUpgrade,
   onBack,
@@ -47,7 +107,7 @@ const PlansOverviewScreen: React.FC<PlansOverviewScreenProps> = ({
         setCurrentPlan(plan);
       } catch (error) {
         logger.error("Failed to fetch current plan:", error);
-        setError("Không thể tải thông tin gói hiện tại");
+        setError("Khong the tai thong tin goi hien tai");
       } finally {
         setIsLoading(false);
       }
@@ -217,7 +277,7 @@ const PlansOverviewScreen: React.FC<PlansOverviewScreenProps> = ({
                       </div>
                     )}
                     <span className={`text-sm ${feature.included ? "text-gray-900" : "text-gray-400"}`}>
-                      {feature.text}
+                      {feature.text ?? feature.vi ?? feature.en ?? ""}
                     </span>
                   </div>
                 ))}
